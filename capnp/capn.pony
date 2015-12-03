@@ -5,8 +5,8 @@ trait val CapnEnum
 
 class CapnList[A: CapnStruct val] is ReadSeq[A] let _list: CapnListPtrToStructs
   new create(list': CapnListPtrToStructs) => _list = list'
-  fun size(): U64 => _list.size()
-  fun apply(i: U64): A^? => A(_list(i))
+  fun size(): USize => _list.size()
+  fun apply(i: USize): A^? => A(_list(i))
   fun values(): Iterator[A^]^ =>
     object is Iterator[A]
       let _inner: Iterator[CapnStructPtr] = this._list.values()
