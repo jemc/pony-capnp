@@ -58,7 +58,6 @@ class FileGenerator
   fun _type_is_partial(t: schema.Type): Bool =>
     t.union_is_text()
     or t.union_is_data()
-    or t.union_is_list()
     or t.union_is_struct()
     or t.union_is_interface()
     or t.union_is_anyPointer()

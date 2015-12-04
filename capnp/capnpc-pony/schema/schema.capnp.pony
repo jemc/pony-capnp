@@ -7,9 +7,9 @@ class val Node is CapnStruct let _struct: CapnStructPtr
   fun displayName(): String? => _struct.ptr_text(0)
   fun displayNamePrefixLength(): U32 => _struct.u32(0x8)
   fun scopeId(): U64 => _struct.u64(0x10)
-  fun nestedNodes(): CapnList[NodeNestedNode]? => _struct.ptr_list[NodeNestedNode](1)
-  fun annotations(): CapnList[Annotation]? => _struct.ptr_list[Annotation](2)
-  fun parameters(): CapnList[NodeParameter]? => _struct.ptr_list[NodeParameter](5)
+  fun nestedNodes(): CapnList[NodeNestedNode] => _struct.ptr_list[NodeNestedNode](1)
+  fun annotations(): CapnList[Annotation] => _struct.ptr_list[Annotation](2)
+  fun parameters(): CapnList[NodeParameter] => _struct.ptr_list[NodeParameter](5)
   fun isGeneric(): Bool => _struct.bool(0x24, 0b00000001)
   fun union_file(): None? => _struct.assert_union(0xC, 0); None
   fun union_struct(): NodeGROUPstruct? => _struct.assert_union(0xC, 1); NodeGROUPstruct(_struct)
@@ -32,16 +32,16 @@ class val NodeGROUPstruct is CapnGroup let _struct: CapnStructPtr
   fun isGroup(): Bool => _struct.bool(0x1C, 0b00000001)
   fun discriminantCount(): U16 => _struct.u16(0x1E)
   fun discriminantOffset(): U32 => _struct.u32(0x20)
-  fun fields(): CapnList[Field]? => _struct.ptr_list[Field](3)
+  fun fields(): CapnList[Field] => _struct.ptr_list[Field](3)
 
 class val NodeGROUPenum is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
-  fun enumerants(): CapnList[Enumerant]? => _struct.ptr_list[Enumerant](3)
+  fun enumerants(): CapnList[Enumerant] => _struct.ptr_list[Enumerant](3)
 
 class val NodeGROUPinterface is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
-  fun methods(): CapnList[Method]? => _struct.ptr_list[Method](3)
-  fun superclasses(): CapnList[Superclass]? => _struct.ptr_list[Superclass](4)
+  fun methods(): CapnList[Method] => _struct.ptr_list[Method](3)
+  fun superclasses(): CapnList[Superclass] => _struct.ptr_list[Superclass](4)
 
 class val NodeGROUPconst is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
@@ -77,7 +77,7 @@ class val Field is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x18, 8*4); _struct = s'
   fun name(): String? => _struct.ptr_text(0)
   fun codeOrder(): U16 => _struct.u16(0x0)
-  fun annotations(): CapnList[Annotation]? => _struct.ptr_list[Annotation](1)
+  fun annotations(): CapnList[Annotation] => _struct.ptr_list[Annotation](1)
   fun discriminantValue(): U16 => 65535 xor _struct.u16(0x2)
   fun ordinal(): FieldGROUPordinal => FieldGROUPordinal(_struct)
   fun union_slot(): FieldGROUPslot? => _struct.assert_union(0x8, 0); FieldGROUPslot(_struct)
@@ -108,7 +108,7 @@ class val Enumerant is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*2); _struct = s'
   fun name(): String? => _struct.ptr_text(0)
   fun codeOrder(): U16 => _struct.u16(0x0)
-  fun annotations(): CapnList[Annotation]? => _struct.ptr_list[Annotation](1)
+  fun annotations(): CapnList[Annotation] => _struct.ptr_list[Annotation](1)
 
 class val Superclass is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*1); _struct = s'
@@ -121,10 +121,10 @@ class val Method is CapnStruct let _struct: CapnStructPtr
   fun codeOrder(): U16 => _struct.u16(0x0)
   fun paramStructType(): U64 => _struct.u64(0x8)
   fun resultStructType(): U64 => _struct.u64(0x10)
-  fun annotations(): CapnList[Annotation]? => _struct.ptr_list[Annotation](1)
+  fun annotations(): CapnList[Annotation] => _struct.ptr_list[Annotation](1)
   fun paramBrand(): Brand? => _struct.ptr_struct[Brand](2)
   fun resultBrand(): Brand? => _struct.ptr_struct[Brand](3)
-  fun implicitParameters(): CapnList[NodeParameter]? => _struct.ptr_list[NodeParameter](4)
+  fun implicitParameters(): CapnList[NodeParameter] => _struct.ptr_list[NodeParameter](4)
 
 class val Type is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x18, 8*1); _struct = s'
@@ -217,7 +217,7 @@ class val TypeGROUPanyPointerGROUPimplicitMethodParameter is CapnGroup let _stru
 
 class val Brand is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x0, 8*1); _struct = s'
-  fun scopes(): CapnList[BrandScope]? => _struct.ptr_list[BrandScope](0)
+  fun scopes(): CapnList[BrandScope] => _struct.ptr_list[BrandScope](0)
 
 class val BrandScope is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x10, 8*1); _struct = s'
@@ -295,14 +295,14 @@ class val ElementSize is CapnEnum let _value: U16
 
 class val CodeGeneratorRequest is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x0, 8*2); _struct = s'
-  fun nodes(): CapnList[Node]? => _struct.ptr_list[Node](0)
-  fun requestedFiles(): CapnList[CodeGeneratorRequestRequestedFile]? => _struct.ptr_list[CodeGeneratorRequestRequestedFile](1)
+  fun nodes(): CapnList[Node] => _struct.ptr_list[Node](0)
+  fun requestedFiles(): CapnList[CodeGeneratorRequestRequestedFile] => _struct.ptr_list[CodeGeneratorRequestRequestedFile](1)
 
 class val CodeGeneratorRequestRequestedFile is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*2); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
   fun filename(): String? => _struct.ptr_text(0)
-  fun imports(): CapnList[CodeGeneratorRequestRequestedFileImport]? => _struct.ptr_list[CodeGeneratorRequestRequestedFileImport](1)
+  fun imports(): CapnList[CodeGeneratorRequestRequestedFileImport] => _struct.ptr_list[CodeGeneratorRequestRequestedFileImport](1)
 
 class val CodeGeneratorRequestRequestedFileImport is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*1); _struct = s'

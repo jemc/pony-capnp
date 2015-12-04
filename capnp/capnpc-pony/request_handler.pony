@@ -5,10 +5,8 @@ actor RequestHandler
   let _writer: FileWriter
   new create(writer: FileWriter) => _writer = writer
   
-  be apply(req: schema.CodeGeneratorRequest) =>
-    try _apply(Request(req)) end
-  
-  fun _apply(req: Request)? =>
+  be apply(req': schema.CodeGeneratorRequest) =>
+    let req = Request(req')
     for file in req.root.nodes().values() do
       if file.union_is_file() then
         try

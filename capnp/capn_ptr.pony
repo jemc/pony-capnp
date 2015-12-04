@@ -90,8 +90,10 @@ class val CapnStructPtr
   fun ptr_text(i: USize): String? => (pointer(i) as CapnListPtrToBytes).as_text()
   fun ptr_data(i: USize): Array[U8] val? => error // TODO: implement
   
-  fun ptr_list[A: CapnStruct val](i: USize): CapnList[A]? =>
-    CapnList[A](pointer(i) as CapnListPtrToStructs)
+  fun ptr_list[A: CapnStruct val](i: USize): CapnList[A] =>
+    CapnList[A](try pointer(i) as CapnListPtrToStructs
+                else CapnListPtrToStructs(segments, segment_index, 0, 0)
+                end)
   
   fun ptr_struct[A: CapnStruct val](i: USize): A^? =>
     A(pointer(i) as CapnStructPtr)
@@ -158,28 +160,27 @@ class val CapnListPtrToStructs is (CapnListPtr & ReadSeq[CapnStructPtr])
   let list_size: U32
   let struct_data_size: USize
   let struct_pointer_size: USize
-  new val create(s: Array[CapnSegment] val, si: USize, d: USize, c: U32)? =>
+  new val create(s: Array[CapnSegment] val, si: USize, d: USize, c: U32) =>
     segments = s; segment_index = si
-    let segment = segments(segment_index)
-    
-    if c == 0 then
-      list_size           = 0
-      struct_data_size    = 0
-      struct_pointer_size = 0
-      data_offset         = d
-      end_offset          = d
-      return
-    end
-    
-    list_size           = segment.u32(d) >> 2
-    struct_data_size    = segment.u16(d + 4).usize() * 8
-    struct_pointer_size = segment.u16(d + 6).usize() * 8
-    data_offset         = d + 8
-    end_offset          = data_offset + (list_size.usize() * (struct_data_size + struct_pointer_size)) // TODO: data_offset + (c.usize() * 8)
-    
-    // TODO: investigate and reinstate this check, which currently fails in some cases.
-    // if (list_size.usize() * (struct_data_size + struct_pointer_size))
-    // != (c.usize() * 8) then error end
+    ( list_size, struct_data_size, struct_pointer_size,
+      data_offset, end_offset ) = try
+        if c == 0 then error end
+        
+        let segment = segments(segment_index)
+        
+        let ls = segment.u32(d) >> 2
+        let sds = segment.u16(d + 4).usize() * 8
+        let sps = segment.u16(d + 6).usize() * 8
+        let dat = d + 8
+        
+        ( ls, sds, sps, dat, dat + (ls.usize() * (sds + sps)) ) // TODO: dat + (c.usize() * 8)
+        
+        // TODO: investigate and reinstate this check, which currently fails in some cases.
+        // if (list_size.usize() * (struct_data_size + struct_pointer_size))
+        // != (c.usize() * 8) then error end
+      else
+        ( 0, 0, 0, d, d )
+      end
   
   fun size(): USize => list_size.usize()
   
