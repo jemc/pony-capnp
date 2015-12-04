@@ -72,7 +72,9 @@ class val CapnStructPtr
   fun assert_union(i: USize, value: U16)? => if u16(i) != value then error end
   
   fun pointer(i: USize): CapnEntityPtr? =>
-    CapnEntityPtrUtil.parse(segments, segment_index, pointer_offset + (i * 8))
+    let offset = pointer_offset + (i * 8)
+    if (offset + 7) >= end_offset then error end
+    CapnEntityPtrUtil.parse(segments, segment_index, offset)
   
   fun pointers(): Iterator[CapnEntityPtr] =>
     object is Iterator[CapnEntityPtr]
