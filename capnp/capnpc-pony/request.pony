@@ -38,11 +38,9 @@ class Request
   
   fun _node_scoped_name_of_typedecl(this_node: schema.Node): String =>
     let scope_node = try node(this_node.scopeId()) else return "" end
-    try
-      for n in scope_node.nestedNodes().values() do
-        if this_node.id() == n.id() then
-          return node_scoped_name(this_node.scopeId()) + "" + n.name()
-        end
+    for n in scope_node.nestedNodes().values() do
+      if this_node.id() == n.id() then
+        return node_scoped_name(this_node.scopeId()) + "" + n.name()
       end
     end
     "UNKNOWN_TYPE"

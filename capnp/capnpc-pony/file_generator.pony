@@ -29,6 +29,22 @@ class FileGenerator
     else name
     end
   
+  fun tag _string_literal(s: String): String =>
+    let out = recover trn String end
+    out.push('"')
+    for b' in s.values() do
+      match b'
+      | '"'  => out.push('\\'); out.push('"')
+      | '\\' => out.push('\\'); out.push('\\')
+      | let b: U8 if b < 0x10 => out.append("\\x0" + b.string(FormatHexBare))
+      | let b: U8 if b < 0x20 => out.append("\\x"  + b.string(FormatHexBare))
+      | let b: U8 if b < 0x7F => out.push(b)
+      else let b = b';           out.append("\\x"  + b.string(FormatHexBare))
+      end
+    end
+    out.push('"')
+    consume out
+  
   fun _type_name(t: schema.Type): String =>
     if     t.union_is_void()    then "None"
     elseif t.union_is_bool()    then "Bool"
@@ -56,8 +72,7 @@ class FileGenerator
     end
   
   fun _type_is_partial(t: schema.Type): Bool =>
-    t.union_is_text()
-    or t.union_is_data()
+    t.union_is_data()
     or t.union_is_struct()
     or t.union_is_interface()
     or t.union_is_anyPointer()
@@ -294,12 +309,10 @@ class FileGenerator
       gen.add((slot.offset() * 8).string(FormatHex))
       gen.add(")")
     elseif type_info.union_is_text() then
-      try let dv = slot.defaultValue().union_text()
-        gen.add(" // UNHANDLED: defaultValue")
-      end
-      gen.add("_struct.ptr_text(")
+      let dv = try slot.defaultValue().union_text() else "" end
+      gen.add("try _struct.ptr_text(")
       gen.add(slot.offset().string())
-      gen.add(")")
+      gen.add(") else "+_string_literal(dv)+" end")
     elseif type_info.union_is_data() then
       try let dv = slot.defaultValue().union_data()
         gen.add(" // UNHANDLED: defaultValue")

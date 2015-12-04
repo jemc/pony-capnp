@@ -87,7 +87,10 @@ class val CapnStructPtr
     end
   
   fun ptr(i: USize): CapnEntityPtr? => pointer(i)
-  fun ptr_text(i: USize): String? => (pointer(i) as CapnListPtrToBytes).as_text()
+  
+  fun ptr_text(i: USize): String? =>
+    (pointer(i) as CapnListPtrToBytes).as_text()
+  
   fun ptr_data(i: USize): Array[U8] val? => error // TODO: implement
   
   fun ptr_list[A: CapnStruct val](i: USize): CapnList[A] =>

@@ -4,7 +4,7 @@ use "../.."
 class val Node is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x28, 8*6); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
-  fun displayName(): String? => _struct.ptr_text(0)
+  fun displayName(): String => try _struct.ptr_text(0) else "" end
   fun displayNamePrefixLength(): U32 => _struct.u32(0x8)
   fun scopeId(): U64 => _struct.u64(0x10)
   fun nestedNodes(): CapnList[NodeNestedNode] => _struct.ptr_list[NodeNestedNode](1)
@@ -66,16 +66,16 @@ class val NodeGROUPannotation is CapnGroup let _struct: CapnStructPtr
 
 class val NodeParameter is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x0, 8*1); _struct = s'
-  fun name(): String? => _struct.ptr_text(0)
+  fun name(): String => try _struct.ptr_text(0) else "" end
 
 class val NodeNestedNode is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*1); _struct = s'
-  fun name(): String? => _struct.ptr_text(0)
+  fun name(): String => try _struct.ptr_text(0) else "" end
   fun id(): U64 => _struct.u64(0x0)
 
 class val Field is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x18, 8*4); _struct = s'
-  fun name(): String? => _struct.ptr_text(0)
+  fun name(): String => try _struct.ptr_text(0) else "" end
   fun codeOrder(): U16 => _struct.u16(0x0)
   fun annotations(): CapnList[Annotation] => _struct.ptr_list[Annotation](1)
   fun discriminantValue(): U16 => 65535 xor _struct.u16(0x2)
@@ -106,7 +106,7 @@ class val FieldGROUPordinal is CapnGroup let _struct: CapnStructPtr
 
 class val Enumerant is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*2); _struct = s'
-  fun name(): String? => _struct.ptr_text(0)
+  fun name(): String => try _struct.ptr_text(0) else "" end
   fun codeOrder(): U16 => _struct.u16(0x0)
   fun annotations(): CapnList[Annotation] => _struct.ptr_list[Annotation](1)
 
@@ -117,7 +117,7 @@ class val Superclass is CapnStruct let _struct: CapnStructPtr
 
 class val Method is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x18, 8*5); _struct = s'
-  fun name(): String? => _struct.ptr_text(0)
+  fun name(): String => try _struct.ptr_text(0) else "" end
   fun codeOrder(): U16 => _struct.u16(0x0)
   fun paramStructType(): U64 => _struct.u64(0x8)
   fun resultStructType(): U64 => _struct.u64(0x10)
@@ -248,7 +248,7 @@ class val Value is CapnStruct let _struct: CapnStructPtr
   fun union_uint64(): U64? => _struct.assert_union(0x0, 9); _struct.u64(0x8)
   fun union_float32(): F32? => _struct.assert_union(0x0, 10); _struct.f32(0x4)
   fun union_float64(): F64? => _struct.assert_union(0x0, 11); _struct.f64(0x8)
-  fun union_text(): String? => _struct.assert_union(0x0, 12); _struct.ptr_text(0)
+  fun union_text(): String? => _struct.assert_union(0x0, 12); try _struct.ptr_text(0) else "" end
   fun union_data(): Array[U8] val? => _struct.assert_union(0x0, 13); _struct.ptr_data(0)
   fun union_list(): CapnEntityPtr? => _struct.assert_union(0x0, 14); _struct.ptr(0) // TODO: better return type?
   fun union_enum(): U16? => _struct.assert_union(0x0, 15); _struct.u16(0x2)
@@ -301,10 +301,10 @@ class val CodeGeneratorRequest is CapnStruct let _struct: CapnStructPtr
 class val CodeGeneratorRequestRequestedFile is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*2); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
-  fun filename(): String? => _struct.ptr_text(0)
+  fun filename(): String => try _struct.ptr_text(0) else "" end
   fun imports(): CapnList[CodeGeneratorRequestRequestedFileImport] => _struct.ptr_list[CodeGeneratorRequestRequestedFileImport](1)
 
 class val CodeGeneratorRequestRequestedFileImport is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*1); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
-  fun name(): String? => _struct.ptr_text(0)
+  fun name(): String => try _struct.ptr_text(0) else "" end
