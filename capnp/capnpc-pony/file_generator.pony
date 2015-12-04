@@ -86,8 +86,7 @@ class FileGenerator
     end
   
   fun _type_is_partial(t: schema.Type): Bool =>
-    t.union_is_struct()
-    or t.union_is_interface()
+    t.union_is_interface()
     or t.union_is_anyPointer()
   
   fun ref _file(node: schema.Node)? =>
@@ -136,7 +135,7 @@ class FileGenerator
     if struct_info.isGroup() then
       gen.add(" =>")
     else
-      gen.add("? => s'.verify("+ds+", 8*"+ps+");")
+      gen.add(" => s'.verify("+ds+", 8*"+ps+");")
     end
     
     gen.add(" _struct = s'")
@@ -344,7 +343,7 @@ class FileGenerator
       gen.add(")")
       if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_text() then
-      let dv = try slot.defaultValue().union_text() else "" end
+      let dv = slot.defaultValue().union_text()
       gen.add(" try")
       if is_union then _field_union_check_condition(node, field) end
       gen.add(" _struct.ptr_text(")
@@ -353,7 +352,7 @@ class FileGenerator
       if is_union then gen.add(" else error end") end
       gen.add(" else "+_string_literal(dv)+" end")
     elseif type_info.union_is_data() then
-      let dv = try slot.defaultValue().union_data() else recover val Array[U8] end end
+      let dv = slot.defaultValue().union_data()
       gen.add(" try")
       if is_union then _field_union_check_condition(node, field) end
       gen.add(" _struct.ptr_data(")
@@ -375,22 +374,20 @@ class FileGenerator
       gen.add(" ")
       gen.add(try req.node_scoped_name(type_info.union_enum().typeId()) else "???" end)
       gen.add("(")
-      try let dv = slot.defaultValue().union_uint16()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
+      let dv = slot.defaultValue().union_uint16()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
       gen.add("_struct.u16(")
       gen.add((slot.offset() * 2).string(FormatHex))
       gen.add("))")
       if is_union then gen.add(" else error end") end
     elseif type_info.union_is_struct() then
       // TODO: handle defaultValue
+      let etype_name = try req.node_scoped_name(type_info.union_struct().typeId()) else "???" end
+      gen.add(" try")
       if is_union then _field_union_check_condition(node, field) end
-      gen.add(" _struct.ptr_struct[")
-      gen.add(try req.node_scoped_name(type_info.union_struct().typeId()) else "???" end)
-      gen.add("](")
-      gen.add(slot.offset().string())
-      gen.add(")")
+      gen.add(" _struct.ptr_struct["+etype_name+"]("+slot.offset().string()+")")
       if is_union then gen.add(" else error end") end
+      gen.add(" else _struct.ptr_emptystruct["+etype_name+"]() end")
     elseif type_info.union_is_interface() then
       // TODO: handle
       // TODO: handle defaultValue

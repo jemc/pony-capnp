@@ -2,7 +2,7 @@
 use "../.."
 
 class val Node is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x28, 8*6); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x28, 8*6); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
   fun displayName(): String => try _struct.ptr_text(0) else "" end
   fun displayNamePrefixLength(): U32 => _struct.u32(0x8)
@@ -45,12 +45,12 @@ class val NodeGROUPinterface is CapnGroup let _struct: CapnStructPtr
 
 class val NodeGROUPconst is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
-  fun get_type(): Type? => _struct.ptr_struct[Type](3)
-  fun value(): Value? => _struct.ptr_struct[Value](4)
+  fun get_type(): Type => try _struct.ptr_struct[Type](3) else _struct.ptr_emptystruct[Type]() end
+  fun value(): Value => try _struct.ptr_struct[Value](4) else _struct.ptr_emptystruct[Value]() end
 
 class val NodeGROUPannotation is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
-  fun get_type(): Type? => _struct.ptr_struct[Type](3)
+  fun get_type(): Type => try _struct.ptr_struct[Type](3) else _struct.ptr_emptystruct[Type]() end
   fun targetsFile(): Bool => _struct.bool(0xE, 0b00000001)
   fun targetsConst(): Bool => _struct.bool(0xE, 0b00000010)
   fun targetsEnum(): Bool => _struct.bool(0xE, 0b00000100)
@@ -65,16 +65,16 @@ class val NodeGROUPannotation is CapnGroup let _struct: CapnStructPtr
   fun targetsAnnotation(): Bool => _struct.bool(0xF, 0b00001000)
 
 class val NodeParameter is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x0, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x0, 8*1); _struct = s'
   fun name(): String => try _struct.ptr_text(0) else "" end
 
 class val NodeNestedNode is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x8, 8*1); _struct = s'
   fun name(): String => try _struct.ptr_text(0) else "" end
   fun id(): U64 => _struct.u64(0x0)
 
 class val Field is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x18, 8*4); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x18, 8*4); _struct = s'
   fun name(): String => try _struct.ptr_text(0) else "" end
   fun codeOrder(): U16 => _struct.u16(0x0)
   fun annotations(): CapnList[Annotation] => try _struct.ptr_list[Annotation](1) else _struct.ptr_emptylist[Annotation]() end
@@ -88,8 +88,8 @@ class val Field is CapnStruct let _struct: CapnStructPtr
 class val FieldGROUPslot is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
   fun offset(): U32 => _struct.u32(0x4)
-  fun get_type(): Type? => _struct.ptr_struct[Type](2)
-  fun defaultValue(): Value? => _struct.ptr_struct[Value](3)
+  fun get_type(): Type => try _struct.ptr_struct[Type](2) else _struct.ptr_emptystruct[Type]() end
+  fun defaultValue(): Value => try _struct.ptr_struct[Value](3) else _struct.ptr_emptystruct[Value]() end
   fun hadExplicitDefault(): Bool => _struct.bool(0x10, 0b00000001)
 
 class val FieldGROUPgroup is CapnGroup let _struct: CapnStructPtr
@@ -105,29 +105,29 @@ class val FieldGROUPordinal is CapnGroup let _struct: CapnStructPtr
 // UNHANDLED: schema/schema.capnp:Field.noDiscriminant
 
 class val Enumerant is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*2); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x8, 8*2); _struct = s'
   fun name(): String => try _struct.ptr_text(0) else "" end
   fun codeOrder(): U16 => _struct.u16(0x0)
   fun annotations(): CapnList[Annotation] => try _struct.ptr_list[Annotation](1) else _struct.ptr_emptylist[Annotation]() end
 
 class val Superclass is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x8, 8*1); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
-  fun brand(): Brand? => _struct.ptr_struct[Brand](0)
+  fun brand(): Brand => try _struct.ptr_struct[Brand](0) else _struct.ptr_emptystruct[Brand]() end
 
 class val Method is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x18, 8*5); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x18, 8*5); _struct = s'
   fun name(): String => try _struct.ptr_text(0) else "" end
   fun codeOrder(): U16 => _struct.u16(0x0)
   fun paramStructType(): U64 => _struct.u64(0x8)
   fun resultStructType(): U64 => _struct.u64(0x10)
   fun annotations(): CapnList[Annotation] => try _struct.ptr_list[Annotation](1) else _struct.ptr_emptylist[Annotation]() end
-  fun paramBrand(): Brand? => _struct.ptr_struct[Brand](2)
-  fun resultBrand(): Brand? => _struct.ptr_struct[Brand](3)
+  fun paramBrand(): Brand => try _struct.ptr_struct[Brand](2) else _struct.ptr_emptystruct[Brand]() end
+  fun resultBrand(): Brand => try _struct.ptr_struct[Brand](3) else _struct.ptr_emptystruct[Brand]() end
   fun implicitParameters(): CapnList[NodeParameter] => try _struct.ptr_list[NodeParameter](4) else _struct.ptr_emptylist[NodeParameter]() end
 
 class val Type is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x18, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x18, 8*1); _struct = s'
   fun union_void(): None => None
   fun union_bool(): None => None
   fun union_int8(): None => None
@@ -169,22 +169,22 @@ class val Type is CapnStruct let _struct: CapnStructPtr
 
 class val TypeGROUPlist is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
-  fun elementType(): Type? => _struct.ptr_struct[Type](0)
+  fun elementType(): Type => try _struct.ptr_struct[Type](0) else _struct.ptr_emptystruct[Type]() end
 
 class val TypeGROUPenum is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
   fun typeId(): U64 => _struct.u64(0x8)
-  fun brand(): Brand? => _struct.ptr_struct[Brand](0)
+  fun brand(): Brand => try _struct.ptr_struct[Brand](0) else _struct.ptr_emptystruct[Brand]() end
 
 class val TypeGROUPstruct is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
   fun typeId(): U64 => _struct.u64(0x8)
-  fun brand(): Brand? => _struct.ptr_struct[Brand](0)
+  fun brand(): Brand => try _struct.ptr_struct[Brand](0) else _struct.ptr_emptystruct[Brand]() end
 
 class val TypeGROUPinterface is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
   fun typeId(): U64 => _struct.u64(0x8)
-  fun brand(): Brand? => _struct.ptr_struct[Brand](0)
+  fun brand(): Brand => try _struct.ptr_struct[Brand](0) else _struct.ptr_emptystruct[Brand]() end
 
 class val TypeGROUPanyPointer is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
@@ -216,11 +216,11 @@ class val TypeGROUPanyPointerGROUPimplicitMethodParameter is CapnGroup let _stru
   fun parameterIndex(): U16 => _struct.u16(0xA)
 
 class val Brand is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x0, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x0, 8*1); _struct = s'
   fun scopes(): CapnList[BrandScope] => try _struct.ptr_list[BrandScope](0) else _struct.ptr_emptylist[BrandScope]() end
 
 class val BrandScope is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x10, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x10, 8*1); _struct = s'
   fun scopeId(): U64 => _struct.u64(0x0)
   fun union_bind(): CapnList[BrandBinding] => try if _struct.check_union(0x8, 0) then _struct.ptr_list[BrandBinding](0) else error end else _struct.ptr_emptylist[BrandBinding]() end
   fun union_inherit(): None => None
@@ -228,14 +228,14 @@ class val BrandScope is CapnStruct let _struct: CapnStructPtr
   fun union_is_inherit(): Bool => _struct.check_union(0x8, 1)
 
 class val BrandBinding is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x8, 8*1); _struct = s'
   fun union_unbound(): None => None
-  fun union_type(): Type? => if _struct.check_union(0x0, 1) then _struct.ptr_struct[Type](0) else error end
+  fun union_type(): Type => try if _struct.check_union(0x0, 1) then _struct.ptr_struct[Type](0) else error end else _struct.ptr_emptystruct[Type]() end
   fun union_is_unbound(): Bool => _struct.check_union(0x0, 0)
   fun union_is_type(): Bool => _struct.check_union(0x0, 1)
 
 class val Value is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x10, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x10, 8*1); _struct = s'
   fun union_void(): None => None
   fun union_bool(): Bool => if _struct.check_union(0x0, 1) then _struct.bool(0x2, 0b00000001) else false end
   fun union_int8(): I8 => if _struct.check_union(0x0, 2) then _struct.i8(0x2) else 0 end
@@ -276,10 +276,10 @@ class val Value is CapnStruct let _struct: CapnStructPtr
   fun union_is_anyPointer(): Bool => _struct.check_union(0x0, 18)
 
 class val Annotation is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*2); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x8, 8*2); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
-  fun value(): Value? => _struct.ptr_struct[Value](0)
-  fun brand(): Brand? => _struct.ptr_struct[Brand](1)
+  fun value(): Value => try _struct.ptr_struct[Value](0) else _struct.ptr_emptystruct[Value]() end
+  fun brand(): Brand => try _struct.ptr_struct[Brand](1) else _struct.ptr_emptystruct[Brand]() end
 
 class val ElementSize is CapnEnum let _value: U16
   fun apply(): U16 => _value
@@ -294,17 +294,17 @@ class val ElementSize is CapnEnum let _value: U16
   new val inlineComposite() => _value = 7
 
 class val CodeGeneratorRequest is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x0, 8*2); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x0, 8*2); _struct = s'
   fun nodes(): CapnList[Node] => try _struct.ptr_list[Node](0) else _struct.ptr_emptylist[Node]() end
   fun requestedFiles(): CapnList[CodeGeneratorRequestRequestedFile] => try _struct.ptr_list[CodeGeneratorRequestRequestedFile](1) else _struct.ptr_emptylist[CodeGeneratorRequestRequestedFile]() end
 
 class val CodeGeneratorRequestRequestedFile is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*2); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x8, 8*2); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
   fun filename(): String => try _struct.ptr_text(0) else "" end
   fun imports(): CapnList[CodeGeneratorRequestRequestedFileImport] => try _struct.ptr_list[CodeGeneratorRequestRequestedFileImport](1) else _struct.ptr_emptylist[CodeGeneratorRequestRequestedFileImport]() end
 
 class val CodeGeneratorRequestRequestedFileImport is CapnStruct let _struct: CapnStructPtr
-  new val create(s': CapnStructPtr)? => s'.verify(0x8, 8*1); _struct = s'
+  new val create(s': CapnStructPtr) => s'.verify(0x8, 8*1); _struct = s'
   fun id(): U64 => _struct.u64(0x0)
   fun name(): String => try _struct.ptr_text(0) else "" end

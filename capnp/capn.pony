@@ -1,5 +1,5 @@
 
-trait val CapnStruct new val create(s': CapnStructPtr)?
+trait val CapnStruct new val create(s': CapnStructPtr)
 trait val CapnGroup is CapnStruct
 trait val CapnEnum
 

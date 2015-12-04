@@ -49,10 +49,15 @@ class val CapnStructPtr
     segments = s; segment_index = si; segment = s(si)
     data_offset = d; pointer_offset = p; end_offset = e
   
-  fun verify(ds: USize, ps: USize)? =>
-    if (ds != (pointer_offset - data_offset))
-    or (ps != (end_offset - pointer_offset))
-    then error end
+  new val empty(s: Array[CapnSegment] val, si: USize) =>
+    segments = s; segment_index = si; segment = try s(si) else CapnSegment end
+    data_offset = 0; pointer_offset = 0; end_offset = 0
+  
+  fun verify(ds: USize, ps: USize) =>
+    None // TODO: decide to do something here or remove this method
+    // if (ds != (pointer_offset - data_offset))
+    // or (ps != (end_offset - pointer_offset))
+    // then error end
   
   fun _in_data(j: USize)? =>
     if j >= (pointer_offset - data_offset) then error end
@@ -103,6 +108,9 @@ class val CapnStructPtr
   
   fun ptr_struct[A: CapnStruct val](i: USize): A^? =>
     A(pointer(i) as CapnStructPtr)
+  
+  fun ptr_emptystruct[A: CapnStruct val](): A^ =>
+    A(CapnStructPtr.empty(segments, segment_index))
 
 trait val CapnListPtr
 
