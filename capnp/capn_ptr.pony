@@ -4,8 +4,7 @@ use "debug"
 type CapnEntityPtr is (CapnStructPtr | CapnListPtr | CapnCapabilityPtr)
 
 primitive CapnEntityPtrUtil
-  fun tag parse(segments: Array[CapnSegment] val, s_index: USize, s_offset: USize): CapnEntityPtr? =>
-    let segment = segments(s_index)
+  fun tag parse(segments: Array[CapnSegment] val, segment: CapnSegment, s_offset: USize): CapnEntityPtr? =>
     let lower = segment.u32(s_offset)
     
     match (lower and 0b11)
@@ -17,7 +16,7 @@ primitive CapnEntityPtrUtil
                          + (segment.u16(s_offset + 4).usize() * 8)
       let end_offset     = pointer_offset
                          + (segment.u16(s_offset + 6).usize() * 8)
-      CapnStructPtr(segments, s_index, data_offset, pointer_offset, end_offset)
+      CapnStructPtr(segments, segment, data_offset, pointer_offset, end_offset)
     | 1 => // List
       // TODO: review this calculation of data_offset for all edge cases.
       if 0 > (lower >> 2).i32() then Debug("FIXME") end
@@ -25,13 +24,13 @@ primitive CapnEntityPtrUtil
       let upper       = segment.u32(s_offset + 4)
       let width_code  = upper and 0b111
       let list_size   = upper >> 3
-      CapnListPtrUtil.from(segments, s_index, data_offset, width_code, list_size)
+      CapnListPtrUtil.from(segments, segment, data_offset, width_code, list_size)
     | 2 => // Far Pointer
       let double_far     = (lower and 0b100) isnt U32(0)
       let pointer_offset = (lower >> 3).usize() * 8
       let segment_index  = segment.u32(s_offset + 4).usize()
       if double_far then Debug("FIXME double_far"); error end
-      parse(segments, segment_index, pointer_offset)
+      parse(segments, segments(segment_index), pointer_offset)
     | 3 => // Capability
       let table_index = segment.u32(s_offset + 4)
       CapnCapabilityPtr(table_index)
@@ -40,17 +39,16 @@ primitive CapnEntityPtrUtil
 
 class val CapnStructPtr
   let segments: Array[CapnSegment] val
-  let segment_index: USize
   let segment: CapnSegment
   let data_offset: USize
   let pointer_offset: USize
   let end_offset: USize
-  new val create(s: Array[CapnSegment] val, si: USize, d: USize, p: USize, e: USize)? =>
-    segments = s; segment_index = si; segment = s(si)
+  new val create(ss: Array[CapnSegment] val, s: CapnSegment, d: USize, p: USize, e: USize) =>
+    segments = ss; segment = s
     data_offset = d; pointer_offset = p; end_offset = e
   
-  new val empty(s: Array[CapnSegment] val, si: USize) =>
-    segments = s; segment_index = si; segment = try s(si) else CapnSegment end
+  new val empty(ss: Array[CapnSegment] val, s: CapnSegment) =>
+    segments = ss; segment = s
     data_offset = 0; pointer_offset = 0; end_offset = 0
   
   fun verify(ds: USize, ps: USize) =>
@@ -78,7 +76,7 @@ class val CapnStructPtr
   fun pointer(i: USize): CapnEntityPtr? =>
     let offset = pointer_offset + (i * 8)
     if (offset + 7) >= end_offset then error end
-    CapnEntityPtrUtil.parse(segments, segment_index, offset)
+    CapnEntityPtrUtil.parse(segments, segment, offset)
   
   fun pointers(): Iterator[CapnEntityPtr] =>
     object is Iterator[CapnEntityPtr]
@@ -103,13 +101,13 @@ class val CapnStructPtr
     CapnList[A](pointer(i) as CapnListPtrToStructs)
   
   fun ptr_emptylist[A: CapnStruct val](): CapnList[A] =>
-    CapnList[A](CapnListPtrToStructs(segments, segment_index, 0, 0))
+    CapnList[A](CapnListPtrToStructs(segments, segment, 0, 0))
   
   fun ptr_struct[A: CapnStruct val](i: USize): A^? =>
     A(pointer(i) as CapnStructPtr)
   
   fun ptr_emptystruct[A: CapnStruct val](): A^ =>
-    A(CapnStructPtr.empty(segments, segment_index))
+    A(CapnStructPtr.empty(segments, segment))
 
 trait val CapnListPtr
 
@@ -121,13 +119,13 @@ class val CapnListPtrToBits is CapnListPtr
 
 class val CapnListPtrToBytes is (CapnListPtr & ReadSeq[U8])
   let segments: Array[CapnSegment] val
-  let segment_index: USize
+  let segment: CapnSegment
   let data_offset: USize
   let end_offset: USize
   let list_size: U32
   
-  new val create(s: Array[CapnSegment] val, si: USize, d: USize, c: U32) =>
-    segments = s; segment_index = si
+  new val create(ss: Array[CapnSegment] val, s: CapnSegment, d: USize, c: U32) =>
+    segments = ss; segment = s
     data_offset = d; end_offset = d + c.usize()
     list_size = c
   
@@ -143,7 +141,7 @@ class val CapnListPtrToBytes is (CapnListPtr & ReadSeq[U8])
   
   fun apply(i: USize): U8? =>
     if i < list_size.usize()
-    then segments(segment_index)(data_offset + i)
+    then segment(data_offset + i)
     else error
     end
   
@@ -167,19 +165,17 @@ class val CapnListPtrToPointers is CapnListPtr
 
 class val CapnListPtrToStructs is (CapnListPtr & ReadSeq[CapnStructPtr])
   let segments: Array[CapnSegment] val
-  let segment_index: USize
+  let segment: CapnSegment
   let data_offset: USize
   let end_offset: USize
   let list_size: U32
   let struct_data_size: USize
   let struct_pointer_size: USize
-  new val create(s: Array[CapnSegment] val, si: USize, d: USize, c: U32) =>
-    segments = s; segment_index = si
+  new val create(ss: Array[CapnSegment] val, s: CapnSegment, d: USize, c: U32) =>
+    segments = ss; segment = s
     ( list_size, struct_data_size, struct_pointer_size,
       data_offset, end_offset ) = try
         if c == 0 then error end
-        
-        let segment = segments(segment_index)
         
         let ls = segment.u32(d) >> 2
         let sds = segment.u16(d + 4).usize() * 8
@@ -202,7 +198,7 @@ class val CapnListPtrToStructs is (CapnListPtr & ReadSeq[CapnStructPtr])
     let o0 = data_offset + (i * (struct_data_size + struct_pointer_size))
     let o1 = o0 + struct_data_size
     let o2 = o1 + struct_pointer_size
-    CapnStructPtr(segments, segment_index, o0, o1, o2)
+    CapnStructPtr(segments, segment, o0, o1, o2)
   
   fun values(): Iterator[CapnStructPtr] =>
     object is Iterator[CapnStructPtr]
@@ -217,18 +213,18 @@ class val CapnListPtrToStructs is (CapnListPtr & ReadSeq[CapnStructPtr])
     end
 
 primitive CapnListPtrUtil
-  fun tag from(s: Array[CapnSegment] val,
-    si: USize, d: USize, w: U32, c: U32
+  fun tag from(ss: Array[CapnSegment] val, s: CapnSegment,
+    d: USize, w: U32, c: U32
   ): CapnListPtr? =>
     match w
-    | 0 => CapnListPtrToVoids//(s, si, d, c)
-    | 1 => CapnListPtrToBits//(s, si, d, c)
-    | 2 => CapnListPtrToBytes(s, si, d, c)
-    | 3 => CapnListPtrToWords//(s, si, d, c, 2)
-    | 4 => CapnListPtrToWords//(s, si, d, c, 4)
-    | 5 => CapnListPtrToWords//(s, si, d, c, 8)
-    | 6 => CapnListPtrToPointers//(s, si, d, c)
-    | 7 => CapnListPtrToStructs(s, si, d, c)
+    | 0 => CapnListPtrToVoids//(ss, s, d, c)
+    | 1 => CapnListPtrToBits//(ss, s, d, c)
+    | 2 => CapnListPtrToBytes(ss, s, d, c)
+    | 3 => CapnListPtrToWords//(ss, s, d, c, 2)
+    | 4 => CapnListPtrToWords//(ss, s, d, c, 4)
+    | 5 => CapnListPtrToWords//(ss, s, d, c, 8)
+    | 6 => CapnListPtrToPointers//(ss, s, d, c)
+    | 7 => CapnListPtrToStructs(ss, s, d, c)
     else error
     end
 
