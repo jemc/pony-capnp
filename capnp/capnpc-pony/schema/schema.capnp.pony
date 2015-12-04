@@ -249,7 +249,7 @@ class val Value is CapnStruct let _struct: CapnStructPtr
   fun union_float32(): F32? => _struct.assert_union(0x0, 10); _struct.f32(0x4)
   fun union_float64(): F64? => _struct.assert_union(0x0, 11); _struct.f64(0x8)
   fun union_text(): String? => _struct.assert_union(0x0, 12); try _struct.ptr_text(0) else "" end
-  fun union_data(): Array[U8] val? => _struct.assert_union(0x0, 13); _struct.ptr_data(0)
+  fun union_data(): Array[U8] val? => _struct.assert_union(0x0, 13); try _struct.ptr_data(0) else recover val Array[U8] end end
   fun union_list(): CapnEntityPtr? => _struct.assert_union(0x0, 14); _struct.ptr(0) // TODO: better return type?
   fun union_enum(): U16? => _struct.assert_union(0x0, 15); _struct.u16(0x2)
   fun union_struct(): CapnEntityPtr? => _struct.assert_union(0x0, 16); _struct.ptr(0) // TODO: better return type?

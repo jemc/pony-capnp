@@ -29,7 +29,7 @@ class FileGenerator
     else name
     end
   
-  fun tag _string_literal(s: String): String =>
+  fun tag _string_literal(s: String box): String =>
     let out = recover trn String end
     out.push('"')
     for b' in s.values() do
@@ -43,6 +43,20 @@ class FileGenerator
       end
     end
     out.push('"')
+    consume out
+  
+  fun tag _bytes_literal(a: Array[U8] box): String =>
+    if a.size() == 0 then return "recover val Array[U8] end" end
+    let out = recover trn String end
+    out.append("[as U8: ")
+    
+    let iter = a.values()
+    for b in iter do
+      out.append("0x" + b.string(FormatHexBare, PrefixDefault, 2))
+      if iter.has_next() then out.append(", ") end
+    end
+    
+    out.push(']')
     consume out
   
   fun _type_name(t: schema.Type): String =>
@@ -72,8 +86,7 @@ class FileGenerator
     end
   
   fun _type_is_partial(t: schema.Type): Bool =>
-    t.union_is_data()
-    or t.union_is_struct()
+    t.union_is_struct()
     or t.union_is_interface()
     or t.union_is_anyPointer()
   
@@ -314,12 +327,10 @@ class FileGenerator
       gen.add(slot.offset().string())
       gen.add(") else "+_string_literal(dv)+" end")
     elseif type_info.union_is_data() then
-      try let dv = slot.defaultValue().union_data()
-        gen.add(" // UNHANDLED: defaultValue")
-      end
-      gen.add("_struct.ptr_data(")
+      let dv = try slot.defaultValue().union_data() else recover val Array[U8] end end
+      gen.add("try _struct.ptr_data(")
       gen.add(slot.offset().string())
-      gen.add(")")
+      gen.add(") else "+_bytes_literal(dv)+" end")
     elseif type_info.union_is_list() then
       // TODO: handle defaultValue
       gen.add("_struct.ptr_list[")
