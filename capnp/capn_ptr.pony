@@ -93,10 +93,11 @@ class val CapnStructPtr
   
   fun ptr_data(i: USize): Array[U8] val? => error // TODO: implement
   
-  fun ptr_list[A: CapnStruct val](i: USize): CapnList[A] =>
-    CapnList[A](try pointer(i) as CapnListPtrToStructs
-                else CapnListPtrToStructs(segments, segment_index, 0, 0)
-                end)
+  fun ptr_list[A: CapnStruct val](i: USize): CapnList[A]? =>
+    CapnList[A](pointer(i) as CapnListPtrToStructs)
+  
+  fun ptr_emptylist[A: CapnStruct val](): CapnList[A] =>
+    CapnList[A](CapnListPtrToStructs(segments, segment_index, 0, 0))
   
   fun ptr_struct[A: CapnStruct val](i: USize): A^? =>
     A(pointer(i) as CapnStructPtr)

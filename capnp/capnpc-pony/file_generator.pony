@@ -187,11 +187,7 @@ class FileGenerator
     
     gen.line("fun "+name+"(): Bool =>")
     
-    gen.add(" _struct.check_union(")
-    gen.add((node.union_struct().discriminantOffset() * 2).string(FormatHex))
-    gen.add(", ")
-    gen.add(field.discriminantValue().string())
-    gen.add(")")
+    _field_union_check_statement(node, field)
   
   fun ref _field_group_getter(node: schema.Node, field: schema.Field)? =>
     var name = field.name()
@@ -221,6 +217,22 @@ class FileGenerator
     gen.add(field.discriminantValue().string())
     gen.add(");")
   
+  fun ref _field_union_check_statement(node: schema.Node, field: schema.Field)? =>
+    if node.union_struct().discriminantCount() <= 1 then error end
+    
+    gen.add(" _struct.check_union(")
+    gen.add((node.union_struct().discriminantOffset() * 2).string(FormatHex))
+    gen.add(", ")
+    gen.add(field.discriminantValue().string())
+    gen.add(")")
+  
+  fun ref _field_union_check_condition(node: schema.Node, field: schema.Field)? =>
+    if node.union_struct().discriminantCount() <= 1 then error end
+    
+    gen.add(" if")
+    _field_union_check_statement(node, field)
+    gen.add(" then")
+  
   fun ref _field_getter(node: schema.Node, field: schema.Field)? =>
     if field.union_is_group() then return _field_group_getter(node, field) end
     
@@ -234,112 +246,133 @@ class FileGenerator
     name = try _verify_ident(name) else "get_"+name end
     
     gen.line("fun "+name+"(): "+type_name)
-    if is_union or _type_is_partial(type_info) then gen.add("?") end
+    if _type_is_partial(type_info) then gen.add("?") end
     gen.add(" =>")
     
-    if is_union then _field_union_assert_statement(node, field) end
+    // if is_union then _field_union_assert_statement(node, field) end
     
-    gen.add(" ")
     if type_info.union_is_void() then
-      gen.add("None")
+      gen.add(" None")
     elseif type_info.union_is_bool() then
-      try let dv = slot.defaultValue().union_bool()
-        if dv then gen.add("not ") end
-      end
-      gen.add("_struct.bool(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_bool()
+      if dv then gen.add("not ") end
+      gen.add(" _struct.bool(")
       gen.add((slot.offset() / 8).string(FormatHex))
       gen.add(", 0b")
       gen.add(U32(1 << (slot.offset() % 8)).string(FormatBinaryBare, PrefixDefault, 8))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_int8() then
-      try let dv = slot.defaultValue().union_int8()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
-      gen.add("_struct.i8(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_int8()
+      if dv != 0 then gen.add(" "+dv.string()+" xor") end
+      gen.add(" _struct.i8(")
       gen.add((slot.offset() * 1).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_int16() then
-      try let dv = slot.defaultValue().union_int16()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
-      gen.add("_struct.i16(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_int16()
+      if dv != 0 then gen.add(" "+dv.string()+" xor") end
+      gen.add(" _struct.i16(")
       gen.add((slot.offset() * 2).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_int32() then
-      try let dv = slot.defaultValue().union_int32()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
-      gen.add("_struct.i32(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_int32()
+      if dv != 0 then gen.add(" "+dv.string()+" xor") end
+      gen.add(" _struct.i32(")
       gen.add((slot.offset() * 4).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_int64() then
-      try let dv = slot.defaultValue().union_int64()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
-      gen.add("_struct.i64(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_int64()
+      if dv != 0 then gen.add(" "+dv.string()+" xor") end
+      gen.add(" _struct.i64(")
       gen.add((slot.offset() * 8).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_uint8() then
-      try let dv = slot.defaultValue().union_uint8()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
-      gen.add("_struct.u8(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_uint8()
+      if dv != 0 then gen.add(" "+dv.string()+" xor") end
+      gen.add(" _struct.u8(")
       gen.add((slot.offset() * 1).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_uint16() then
-      try let dv = slot.defaultValue().union_uint16()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
-      gen.add("_struct.u16(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_uint16()
+      if dv != 0 then gen.add(" "+dv.string()+" xor") end
+      gen.add(" _struct.u16(")
       gen.add((slot.offset() * 2).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_uint32() then
-      try let dv = slot.defaultValue().union_uint32()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
-      gen.add("_struct.u32(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_uint32()
+      if dv != 0 then gen.add(" "+dv.string()+" xor") end
+      gen.add(" _struct.u32(")
       gen.add((slot.offset() * 4).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_uint64() then
-      try let dv = slot.defaultValue().union_uint64()
-        if dv != 0 then gen.add(dv.string()+" xor ") end
-      end
-      gen.add("_struct.u64(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_uint64()
+      if dv != 0 then gen.add(" "+dv.string()+" xor") end
+      gen.add(" _struct.u64(")
       gen.add((slot.offset() * 8).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_float32() then
-      try let dv = slot.defaultValue().union_float32()
-        if dv != 0 then gen.add(" // UNHANDLED: defaultValue") end
-      end
-      gen.add("_struct.f32(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_float32()
+      if dv != 0 then gen.add(" // UNHANDLED: defaultValue") end
+      gen.add(" _struct.f32(")
       gen.add((slot.offset() * 4).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_float64() then
-      try let dv = slot.defaultValue().union_float64()
-        if dv != 0 then gen.add(" // UNHANDLED: defaultValue") end
-      end
-      gen.add("_struct.f64(")
+      if is_union then _field_union_check_condition(node, field) end
+      let dv = slot.defaultValue().union_float64()
+      if dv != 0 then gen.add(" // UNHANDLED: defaultValue") end
+      gen.add(" _struct.f64(")
       gen.add((slot.offset() * 8).string(FormatHex))
       gen.add(")")
+      if is_union then gen.add(" else "+dv.string()+" end") end
     elseif type_info.union_is_text() then
       let dv = try slot.defaultValue().union_text() else "" end
-      gen.add("try _struct.ptr_text(")
-      gen.add(slot.offset().string())
-      gen.add(") else "+_string_literal(dv)+" end")
-    elseif type_info.union_is_data() then
-      let dv = try slot.defaultValue().union_data() else recover val Array[U8] end end
-      gen.add("try _struct.ptr_data(")
-      gen.add(slot.offset().string())
-      gen.add(") else "+_bytes_literal(dv)+" end")
-    elseif type_info.union_is_list() then
-      // TODO: handle defaultValue
-      gen.add("_struct.ptr_list[")
-      gen.add(try _type_name(type_info.union_list().elementType()) else "???" end)
-      gen.add("](")
+      gen.add(" try")
+      if is_union then _field_union_check_condition(node, field) end
+      gen.add(" _struct.ptr_text(")
       gen.add(slot.offset().string())
       gen.add(")")
-    elseif type_info.union_is_enum() then
+      if is_union then gen.add(" else error end") end
+      gen.add(" else "+_string_literal(dv)+" end")
+    elseif type_info.union_is_data() then
+      let dv = try slot.defaultValue().union_data() else recover val Array[U8] end end
+      gen.add(" try")
+      if is_union then _field_union_check_condition(node, field) end
+      gen.add(" _struct.ptr_data(")
+      gen.add(slot.offset().string())
+      gen.add(")")
+      if is_union then gen.add(" else error end") end
+      gen.add(" else "+_bytes_literal(dv)+" end")
+    elseif type_info.union_is_list() then
       // TODO: handle defaultValue
+      let etype_name = try _type_name(type_info.union_list().elementType()) else "???" end
+      gen.add(" try")
+      if is_union then _field_union_check_condition(node, field) end
+      gen.add(" _struct.ptr_list["+etype_name+"]("+slot.offset().string()+")")
+      if is_union then gen.add(" else error end") end
+      gen.add(" else _struct.ptr_emptylist["+etype_name+"]() end")
+    elseif type_info.union_is_enum() then
+      if is_union then _field_union_check_condition(node, field) end
+      // TODO: handle defaultValue
+      gen.add(" ")
       gen.add(try req.node_scoped_name(type_info.union_enum().typeId()) else "???" end)
       gen.add("(")
       try let dv = slot.defaultValue().union_uint16()
@@ -348,21 +381,27 @@ class FileGenerator
       gen.add("_struct.u16(")
       gen.add((slot.offset() * 2).string(FormatHex))
       gen.add("))")
+      if is_union then gen.add(" else error end") end
     elseif type_info.union_is_struct() then
       // TODO: handle defaultValue
-      gen.add("_struct.ptr_struct[")
+      if is_union then _field_union_check_condition(node, field) end
+      gen.add(" _struct.ptr_struct[")
       gen.add(try req.node_scoped_name(type_info.union_struct().typeId()) else "???" end)
       gen.add("](")
       gen.add(slot.offset().string())
       gen.add(")")
+      if is_union then gen.add(" else error end") end
     elseif type_info.union_is_interface() then
       // TODO: handle
       // TODO: handle defaultValue
       gen.add("// UNKNOWN_INTERFACE")
     elseif type_info.union_is_anyPointer() then
+      if is_union then _field_union_check_condition(node, field) end
       // TODO: handle defaultValue
-      gen.add("_struct.ptr(")
+      gen.add(" _struct.ptr(")
       gen.add(slot.offset().string())
-      gen.add(") // TODO: better return type?")
+      gen.add(")")
+      if is_union then gen.add(" else error end") end
+      gen.add(" // TODO: better return type?")
     else gen.add("// UNKNOWN")
     end
