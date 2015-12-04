@@ -60,27 +60,24 @@ class FileGenerator
     consume out
   
   fun _type_name(t: schema.Type): String =>
-    if     t.union_is_void()    then "None"
-    elseif t.union_is_bool()    then "Bool"
-    elseif t.union_is_int8()    then "I8"
-    elseif t.union_is_int16()   then "I16"
-    elseif t.union_is_int32()   then "I32"
-    elseif t.union_is_int64()   then "I64"
-    elseif t.union_is_uint8()   then "U8"
-    elseif t.union_is_uint16()  then "U16"
-    elseif t.union_is_uint32()  then "U32"
-    elseif t.union_is_uint64()  then "U64"
-    elseif t.union_is_float32() then "F32"
-    elseif t.union_is_float64() then "F64"
-    elseif t.union_is_text()    then "String"
-    elseif t.union_is_data()    then "Array[U8] val"
-    elseif t.union_is_list() then
-      try "CapnList["+_type_name(t.union_list().elementType())+"]" else "???" end
-    elseif t.union_is_enum() then
-      try req.node_scoped_name(t.union_enum().typeId()) else "???" end
-    elseif t.union_is_struct() then
-      try req.node_scoped_name(t.union_struct().typeId()) else "???" end
-    elseif t.union_is_interface() then "UNKNOWN_INTERFACE"
+    if     t.union_is_void()       then "None"
+    elseif t.union_is_bool()       then "Bool"
+    elseif t.union_is_int8()       then "I8"
+    elseif t.union_is_int16()      then "I16"
+    elseif t.union_is_int32()      then "I32"
+    elseif t.union_is_int64()      then "I64"
+    elseif t.union_is_uint8()      then "U8"
+    elseif t.union_is_uint16()     then "U16"
+    elseif t.union_is_uint32()     then "U32"
+    elseif t.union_is_uint64()     then "U64"
+    elseif t.union_is_float32()    then "F32"
+    elseif t.union_is_float64()    then "F64"
+    elseif t.union_is_text()       then "String"
+    elseif t.union_is_data()       then "Array[U8] val"
+    elseif t.union_is_list()       then "CapnList["+_type_name(t.union_list().elementType())+"]"
+    elseif t.union_is_enum()       then req.node_scoped_name(t.union_enum().typeId())
+    elseif t.union_is_struct()     then req.node_scoped_name(t.union_struct().typeId())
+    elseif t.union_is_interface()  then "UNKNOWN_INTERFACE"
     elseif t.union_is_anyPointer() then "CapnEntityPtr"
     else "UNKNOWN_TYPE"
     end
@@ -101,7 +98,7 @@ class FileGenerator
       end
     end
   
-  fun ref _enum(node: schema.Node)? =>
+  fun ref _enum(node: schema.Node) =>
     let name = req.node_scoped_name(node.id())
     let enum_info = node.union_enum()
     
@@ -197,24 +194,13 @@ class FileGenerator
     if is_union then name = "union_"+name end
     name = try _verify_ident(name) else "get_"+name end
     
-    if is_union then type_name = type_name+"" end
+    gen.line("fun "+name+"(): "+type_name+" =>")
     
-    gen.line("fun "+name+"(): "+type_name)
-    if is_union then gen.add("?") end
-    gen.add(" =>")
-    
-    if is_union then _field_union_assert_statement(node, field) end
+    if is_union then _field_union_check_condition(node, field) end
     
     gen.add(" "+type_name+"(_struct)")
-  
-  fun ref _field_union_assert_statement(node: schema.Node, field: schema.Field)? =>
-    if node.union_struct().discriminantCount() <= 1 then error end
     
-    gen.add(" _struct.assert_union(")
-    gen.add((node.union_struct().discriminantOffset() * 2).string(FormatHex))
-    gen.add(", ")
-    gen.add(field.discriminantValue().string())
-    gen.add(");")
+    if is_union then gen.add(" else _struct.ptr_emptystruct["+type_name+"]() end") end
   
   fun ref _field_union_check_statement(node: schema.Node, field: schema.Field)? =>
     if node.union_struct().discriminantCount() <= 1 then error end
@@ -247,8 +233,6 @@ class FileGenerator
     gen.line("fun "+name+"(): "+type_name)
     if _type_is_partial(type_info) then gen.add("?") end
     gen.add(" =>")
-    
-    // if is_union then _field_union_assert_statement(node, field) end
     
     if type_info.union_is_void() then
       gen.add(" None")
@@ -362,7 +346,7 @@ class FileGenerator
       gen.add(" else "+_bytes_literal(dv)+" end")
     elseif type_info.union_is_list() then
       // TODO: handle defaultValue
-      let etype_name = try _type_name(type_info.union_list().elementType()) else "???" end
+      let etype_name = _type_name(type_info.union_list().elementType())
       gen.add(" try")
       if is_union then _field_union_check_condition(node, field) end
       gen.add(" _struct.ptr_list["+etype_name+"]("+slot.offset().string()+")")
@@ -372,7 +356,7 @@ class FileGenerator
       if is_union then _field_union_check_condition(node, field) end
       // TODO: handle defaultValue
       gen.add(" ")
-      gen.add(try req.node_scoped_name(type_info.union_enum().typeId()) else "???" end)
+      gen.add(req.node_scoped_name(type_info.union_enum().typeId()))
       gen.add("(")
       let dv = slot.defaultValue().union_uint16()
       if dv != 0 then gen.add(dv.string()+" xor ") end
@@ -382,7 +366,7 @@ class FileGenerator
       if is_union then gen.add(" else error end") end
     elseif type_info.union_is_struct() then
       // TODO: handle defaultValue
-      let etype_name = try req.node_scoped_name(type_info.union_struct().typeId()) else "???" end
+      let etype_name = req.node_scoped_name(type_info.union_struct().typeId())
       gen.add(" try")
       if is_union then _field_union_check_condition(node, field) end
       gen.add(" _struct.ptr_struct["+etype_name+"]("+slot.offset().string()+")")

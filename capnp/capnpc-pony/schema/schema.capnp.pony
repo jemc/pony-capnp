@@ -12,11 +12,11 @@ class val Node is CapnStruct let _struct: CapnStructPtr
   fun parameters(): CapnList[NodeParameter] => try _struct.ptr_list[NodeParameter](5) else _struct.ptr_emptylist[NodeParameter]() end
   fun isGeneric(): Bool => _struct.bool(0x24, 0b00000001)
   fun union_file(): None => None
-  fun union_struct(): NodeGROUPstruct? => _struct.assert_union(0xC, 1); NodeGROUPstruct(_struct)
-  fun union_enum(): NodeGROUPenum? => _struct.assert_union(0xC, 2); NodeGROUPenum(_struct)
-  fun union_interface(): NodeGROUPinterface? => _struct.assert_union(0xC, 3); NodeGROUPinterface(_struct)
-  fun union_const(): NodeGROUPconst? => _struct.assert_union(0xC, 4); NodeGROUPconst(_struct)
-  fun union_annotation(): NodeGROUPannotation? => _struct.assert_union(0xC, 5); NodeGROUPannotation(_struct)
+  fun union_struct(): NodeGROUPstruct => if _struct.check_union(0xC, 1) then NodeGROUPstruct(_struct) else _struct.ptr_emptystruct[NodeGROUPstruct]() end
+  fun union_enum(): NodeGROUPenum => if _struct.check_union(0xC, 2) then NodeGROUPenum(_struct) else _struct.ptr_emptystruct[NodeGROUPenum]() end
+  fun union_interface(): NodeGROUPinterface => if _struct.check_union(0xC, 3) then NodeGROUPinterface(_struct) else _struct.ptr_emptystruct[NodeGROUPinterface]() end
+  fun union_const(): NodeGROUPconst => if _struct.check_union(0xC, 4) then NodeGROUPconst(_struct) else _struct.ptr_emptystruct[NodeGROUPconst]() end
+  fun union_annotation(): NodeGROUPannotation => if _struct.check_union(0xC, 5) then NodeGROUPannotation(_struct) else _struct.ptr_emptystruct[NodeGROUPannotation]() end
   fun union_is_file(): Bool => _struct.check_union(0xC, 0)
   fun union_is_struct(): Bool => _struct.check_union(0xC, 1)
   fun union_is_enum(): Bool => _struct.check_union(0xC, 2)
@@ -80,8 +80,8 @@ class val Field is CapnStruct let _struct: CapnStructPtr
   fun annotations(): CapnList[Annotation] => try _struct.ptr_list[Annotation](1) else _struct.ptr_emptylist[Annotation]() end
   fun discriminantValue(): U16 => 65535 xor _struct.u16(0x2)
   fun ordinal(): FieldGROUPordinal => FieldGROUPordinal(_struct)
-  fun union_slot(): FieldGROUPslot? => _struct.assert_union(0x8, 0); FieldGROUPslot(_struct)
-  fun union_group(): FieldGROUPgroup? => _struct.assert_union(0x8, 1); FieldGROUPgroup(_struct)
+  fun union_slot(): FieldGROUPslot => if _struct.check_union(0x8, 0) then FieldGROUPslot(_struct) else _struct.ptr_emptystruct[FieldGROUPslot]() end
+  fun union_group(): FieldGROUPgroup => if _struct.check_union(0x8, 1) then FieldGROUPgroup(_struct) else _struct.ptr_emptystruct[FieldGROUPgroup]() end
   fun union_is_slot(): Bool => _struct.check_union(0x8, 0)
   fun union_is_group(): Bool => _struct.check_union(0x8, 1)
 
@@ -142,11 +142,11 @@ class val Type is CapnStruct let _struct: CapnStructPtr
   fun union_float64(): None => None
   fun union_text(): None => None
   fun union_data(): None => None
-  fun union_list(): TypeGROUPlist? => _struct.assert_union(0x0, 14); TypeGROUPlist(_struct)
-  fun union_enum(): TypeGROUPenum? => _struct.assert_union(0x0, 15); TypeGROUPenum(_struct)
-  fun union_struct(): TypeGROUPstruct? => _struct.assert_union(0x0, 16); TypeGROUPstruct(_struct)
-  fun union_interface(): TypeGROUPinterface? => _struct.assert_union(0x0, 17); TypeGROUPinterface(_struct)
-  fun union_anyPointer(): TypeGROUPanyPointer? => _struct.assert_union(0x0, 18); TypeGROUPanyPointer(_struct)
+  fun union_list(): TypeGROUPlist => if _struct.check_union(0x0, 14) then TypeGROUPlist(_struct) else _struct.ptr_emptystruct[TypeGROUPlist]() end
+  fun union_enum(): TypeGROUPenum => if _struct.check_union(0x0, 15) then TypeGROUPenum(_struct) else _struct.ptr_emptystruct[TypeGROUPenum]() end
+  fun union_struct(): TypeGROUPstruct => if _struct.check_union(0x0, 16) then TypeGROUPstruct(_struct) else _struct.ptr_emptystruct[TypeGROUPstruct]() end
+  fun union_interface(): TypeGROUPinterface => if _struct.check_union(0x0, 17) then TypeGROUPinterface(_struct) else _struct.ptr_emptystruct[TypeGROUPinterface]() end
+  fun union_anyPointer(): TypeGROUPanyPointer => if _struct.check_union(0x0, 18) then TypeGROUPanyPointer(_struct) else _struct.ptr_emptystruct[TypeGROUPanyPointer]() end
   fun union_is_void(): Bool => _struct.check_union(0x0, 0)
   fun union_is_bool(): Bool => _struct.check_union(0x0, 1)
   fun union_is_int8(): Bool => _struct.check_union(0x0, 2)
@@ -188,9 +188,9 @@ class val TypeGROUPinterface is CapnGroup let _struct: CapnStructPtr
 
 class val TypeGROUPanyPointer is CapnGroup let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => _struct = s'
-  fun union_unconstrained(): TypeGROUPanyPointerGROUPunconstrained? => _struct.assert_union(0x8, 0); TypeGROUPanyPointerGROUPunconstrained(_struct)
-  fun union_parameter(): TypeGROUPanyPointerGROUPparameter? => _struct.assert_union(0x8, 1); TypeGROUPanyPointerGROUPparameter(_struct)
-  fun union_implicitMethodParameter(): TypeGROUPanyPointerGROUPimplicitMethodParameter? => _struct.assert_union(0x8, 2); TypeGROUPanyPointerGROUPimplicitMethodParameter(_struct)
+  fun union_unconstrained(): TypeGROUPanyPointerGROUPunconstrained => if _struct.check_union(0x8, 0) then TypeGROUPanyPointerGROUPunconstrained(_struct) else _struct.ptr_emptystruct[TypeGROUPanyPointerGROUPunconstrained]() end
+  fun union_parameter(): TypeGROUPanyPointerGROUPparameter => if _struct.check_union(0x8, 1) then TypeGROUPanyPointerGROUPparameter(_struct) else _struct.ptr_emptystruct[TypeGROUPanyPointerGROUPparameter]() end
+  fun union_implicitMethodParameter(): TypeGROUPanyPointerGROUPimplicitMethodParameter => if _struct.check_union(0x8, 2) then TypeGROUPanyPointerGROUPimplicitMethodParameter(_struct) else _struct.ptr_emptystruct[TypeGROUPanyPointerGROUPimplicitMethodParameter]() end
   fun union_is_unconstrained(): Bool => _struct.check_union(0x8, 0)
   fun union_is_parameter(): Bool => _struct.check_union(0x8, 1)
   fun union_is_implicitMethodParameter(): Bool => _struct.check_union(0x8, 2)
