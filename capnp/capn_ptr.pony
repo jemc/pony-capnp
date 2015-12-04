@@ -54,10 +54,13 @@ class val CapnStructPtr
     or (ps != (end_offset - pointer_offset))
     then error end
   
-  fun u8(i: USize):  U8  => try segment(data_offset + i)     else 0 end
-  fun u16(i: USize): U16 => try segment.u16(data_offset + i) else 0 end
-  fun u32(i: USize): U32 => try segment.u32(data_offset + i) else 0 end
-  fun u64(i: USize): U64 => try segment.u64(data_offset + i) else 0 end
+  fun _in_data(j: USize)? =>
+    if j >= (pointer_offset - data_offset) then error end
+  
+  fun u8(i: USize):  U8  => try _in_data(i);     segment(data_offset + i)     else 0 end
+  fun u16(i: USize): U16 => try _in_data(i + 1); segment.u16(data_offset + i) else 0 end
+  fun u32(i: USize): U32 => try _in_data(i + 3); segment.u32(data_offset + i) else 0 end
+  fun u64(i: USize): U64 => try _in_data(i + 7); segment.u64(data_offset + i) else 0 end
   fun i8(i: USize):  I8  => u8(i).i8()
   fun i16(i: USize): I16 => u16(i).i16()
   fun i32(i: USize): I32 => u32(i).i32()
