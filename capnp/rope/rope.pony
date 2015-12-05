@@ -32,7 +32,7 @@ class val _ArraySliceU8 is _RopeSegment
         if has_next() then slice.array(index = index + 1) else error end
     end
 
-class val Rope is _RopeSegment
+class val Rope is (_RopeSegment & Stringable)
   let _left:  _RopeSegment
   let _right: _RopeSegment
   let _weight: USize
@@ -121,3 +121,12 @@ class val Rope is _RopeSegment
                                + (apply(offset + 5).u64() << 40)
                                + (apply(offset + 6).u64() << 48)
                                + (apply(offset + 7).u64() << 56)
+  
+  fun string(fmt: FormatDefault = FormatDefault,
+    prefix: PrefixDefault = PrefixDefault, prec: USize = -1, width: USize = 0,
+    align: Align = AlignLeft, fill: U32 = ' '
+  ): String iso^ =>
+    let len = size()
+    let out = recover iso String(len) end
+    for byte in values() do out.push(byte) end
+    out
