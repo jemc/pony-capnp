@@ -37,10 +37,6 @@ class val Rope is (_RopeSegment & Stringable)
   let _right: _RopeSegment
   let _weight: USize
   
-  fun _left_field():   _RopeSegment => _left
-  fun _right_field():  _RopeSegment => _right
-  fun _weight_field(): USize        => _weight
-  
   new val create(l: _RopeSegment = RopeNone, r: _RopeSegment = RopeNone) =>
     _left = l
     _right = r
