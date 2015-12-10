@@ -72,6 +72,7 @@ class val CapnStructPtr
   fun f64(i: USize): F64 => u64(i).f64()
   fun bool(i: USize, bitmask: U8): Bool => (u8(i) and bitmask) != 0
   fun check_union(i: USize, value: U16): Bool => u16(i) == value
+  fun assert_union(i: USize, value: U16)? => if u16(i) != value then error end
   
   fun pointer(i: USize): CapnEntityPtr? =>
     let offset = pointer_offset + (i * 8)

@@ -118,6 +118,7 @@ class FileGenerator
     for field in struct_info.fields().values() do
       _field_fun(node, field)
       _field_get_fun(node, field)
+      _field_as_fun(node, field)
       _field_is_fun(node, field)
     end
     
@@ -142,6 +143,15 @@ class FileGenerator
     if node.get_struct().discriminantCount() <= 1 then error end
     
     gen.add(" _struct.check_union(")
+    gen.add((node.get_struct().discriminantOffset() * 2).string(FormatHex))
+    gen.add(", ")
+    gen.add(field.discriminantValue().string())
+    gen.add(")")
+  
+  fun ref _field_expr_assert_union(node: schema.Node, field: schema.Field)? =>
+    if node.get_struct().discriminantCount() <= 1 then error end
+    
+    gen.add(" _struct.assert_union(")
     gen.add((node.get_struct().discriminantOffset() * 2).string(FormatHex))
     gen.add(", ")
     gen.add(field.discriminantValue().string())
@@ -313,6 +323,36 @@ class FileGenerator
       end
       gen.add(" end")
     end
+    
+    if is_partial then
+      gen.add(" else")
+      _field_expr_default_value(node, field)
+      gen.add(" end")
+    end
+  
+  fun ref _field_as_fun(node: schema.Node, field: schema.Field)? =>
+    if field.discriminantValue() == 0xffff then return end
+    
+    let name      = field.name()
+    let type_name = _field_type_name(field)
+    let slot      = field.slot()
+    let type_info = slot.get_type()
+    
+    gen.line("fun as_"+name+"(): "+type_name+"? =>")
+    
+    _field_expr_assert_union(node, field)
+    gen.add(";")
+    
+    if not field.is_group() and type_info.is_void() then
+      gen.add(" None")
+      return
+    end
+    
+    let is_partial = _field_get_is_partial(field)
+    
+    if is_partial then gen.add(" try") end
+    
+    _field_expr_get_value(node, field)
     
     if is_partial then
       gen.add(" else")
