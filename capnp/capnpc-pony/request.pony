@@ -25,8 +25,8 @@ class Request
   
   fun _node_scoped_name_of_group(this_node: schema.Node): String =>
     let scope_node = try node(this_node.scopeId()) else return "" end
-    for field in scope_node.union_struct().fields().values() do
-      if this_node.id() == field.union_group().typeId() then
+    for field in scope_node.get_struct().fields().values() do
+      if this_node.id() == field.group().typeId() then
         return node_scoped_name(this_node.scopeId()) + "GROUP" + field.name()
       end
     end
@@ -43,7 +43,7 @@ class Request
   
   fun node_scoped_name(id: U64): String =>
     let this_node = try node(id) else return "UNKNOWN_NAME" end
-    if this_node.union_struct().isGroup()
+    if this_node.get_struct().isGroup()
     then _node_scoped_name_of_group(this_node)
     else _node_scoped_name_of_typedecl(this_node)
     end

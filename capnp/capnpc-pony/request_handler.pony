@@ -8,7 +8,7 @@ actor RequestHandler
   be apply(req': schema.CodeGeneratorRequest) =>
     let req = Request(req')
     for file in req.root.nodes().values() do
-      if file.union_is_file() then
+      if file.is_file() then
         try
           let file_info = req.file(file.id())
           
