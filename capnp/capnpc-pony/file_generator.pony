@@ -163,15 +163,6 @@ class FileGenerator
     let name      = field.name()
     let type_name = _field_type_name(field)
     let is_union  = field.discriminantValue() != 0xffff
-    
-    if field.is_group() then
-      gen.line("fun get_"+name+"(): "+type_name+" =>")
-      if is_union then _field_expr_if_check_union(node, field) end
-      gen.add(" "+type_name+"(_struct)")
-      if is_union then gen.add(" else _struct.ptr_emptystruct["+type_name+"]() end") end
-      return
-    end
-    
     let slot      = field.slot()
     let type_info = slot.get_type()
     
@@ -179,7 +170,11 @@ class FileGenerator
     if _field_type_is_partial(field) then gen.add("?") end
     gen.add(" =>")
     
-    if type_info.is_void() then
+    if field.is_group() then
+      if is_union then _field_expr_if_check_union(node, field) end
+      gen.add(" "+type_name+"(_struct)")
+      if is_union then gen.add(" else _struct.ptr_emptystruct["+type_name+"]() end") end
+    elseif type_info.is_void() then
       gen.add(" None")
     elseif type_info.is_bool() then
       if is_union then _field_expr_if_check_union(node, field) end
