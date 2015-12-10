@@ -9,36 +9,6 @@ class FileGenerator
   
   new ref create(req': Request, node: schema.Node)? => req = req'; _file(node)
   
-  fun tag _string_literal(s: String box): String =>
-    let out = recover trn String end
-    out.push('"')
-    for b' in s.values() do
-      match b'
-      | '"'  => out.push('\\'); out.push('"')
-      | '\\' => out.push('\\'); out.push('\\')
-      | let b: U8 if b < 0x10 => out.append("\\x0" + b.string(FormatHexBare))
-      | let b: U8 if b < 0x20 => out.append("\\x"  + b.string(FormatHexBare))
-      | let b: U8 if b < 0x7F => out.push(b)
-      else let b = b';           out.append("\\x"  + b.string(FormatHexBare))
-      end
-    end
-    out.push('"')
-    consume out
-  
-  fun tag _bytes_literal(a: Array[U8] box): String =>
-    if a.size() == 0 then return "recover val Array[U8] end" end
-    let out = recover trn String end
-    out.append("[as U8: ")
-    
-    let iter = a.values()
-    for b in iter do
-      out.append("0x" + b.string(FormatHexBare, PrefixDefault, 2))
-      if iter.has_next() then out.append(", ") end
-    end
-    
-    out.push(']')
-    consume out
-  
   fun _type_name(t: schema.Type): String =>
     if     t.is_void()       then "None"
     elseif t.is_bool()       then "Bool"
@@ -314,7 +284,7 @@ class FileGenerator
       gen.add(slot.offset().string())
       gen.add(")")
       if is_union then gen.add(" else error end") end
-      gen.add(" else "+_string_literal(dv)+" end")
+      gen.add(" else "+gen.string_literal(dv)+" end")
     elseif type_info.is_data() then
       let dv = slot.defaultValue().data()
       gen.add(" try")
@@ -323,7 +293,7 @@ class FileGenerator
       gen.add(slot.offset().string())
       gen.add(")")
       if is_union then gen.add(" else error end") end
-      gen.add(" else "+_bytes_literal(dv)+" end")
+      gen.add(" else "+gen.bytes_literal(dv)+" end")
     elseif type_info.is_list() then
       // TODO: handle defaultValue
       let etype_name = _type_name(type_info.list().elementType())

@@ -48,3 +48,33 @@ class CodeGen
     | "end" => false
     else true
     end
+  
+  fun tag string_literal(s: String box): String =>
+    let out = recover trn String end
+    out.push('"')
+    for b' in s.values() do
+      match b'
+      | '"'  => out.push('\\'); out.push('"')
+      | '\\' => out.push('\\'); out.push('\\')
+      | let b: U8 if b < 0x10 => out.append("\\x0" + b.string(FormatHexBare))
+      | let b: U8 if b < 0x20 => out.append("\\x"  + b.string(FormatHexBare))
+      | let b: U8 if b < 0x7F => out.push(b)
+      else let b = b';           out.append("\\x"  + b.string(FormatHexBare))
+      end
+    end
+    out.push('"')
+    consume out
+  
+  fun tag bytes_literal(a: Array[U8] box): String =>
+    if a.size() == 0 then return "recover val Array[U8] end" end
+    let out = recover trn String end
+    out.append("[as U8: ")
+    
+    let iter = a.values()
+    for b in iter do
+      out.append("0x" + b.string(FormatHexBare, PrefixDefault, 2))
+      if iter.has_next() then out.append(", ") end
+    end
+    
+    out.push(']')
+    consume out
