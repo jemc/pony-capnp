@@ -418,13 +418,21 @@ class val ElementSize is CapnEnum let _value: U16
   fun apply(): U16 => _value
   new val create(value': U16) => _value = value'
   new val empty() => _value = 0
+  new val value_empty() => _value = 0
   new val bit() => _value = 1
+  new val value_bit() => _value = 1
   new val byte() => _value = 2
+  new val value_byte() => _value = 2
   new val twoBytes() => _value = 3
+  new val value_twoBytes() => _value = 3
   new val fourBytes() => _value = 4
+  new val value_fourBytes() => _value = 4
   new val eightBytes() => _value = 5
+  new val value_eightBytes() => _value = 5
   new val pointer() => _value = 6
+  new val value_pointer() => _value = 6
   new val inlineComposite() => _value = 7
+  new val value_inlineComposite() => _value = 7
 
 class val CodeGeneratorRequest is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => s'.verify(0x0, 8*2); _struct = s'

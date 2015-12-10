@@ -111,9 +111,14 @@ class FileGenerator
     
     var value: U16 = 0
     for enumerant in enum_info.enumerants().values() do
-      var val_name = enumerant.name()
-      val_name = try _verify_ident(val_name) else "value_"+val_name end
-      gen.line("new val "+val_name+"() => _value = "+value.string())
+      let val_name = enumerant.name()
+      try _verify_ident(val_name)
+        gen.line("new val "+val_name+"() => _value = "+value.string())
+      else
+        gen.line("// new val "+val_name+"() => _value = "+value.string())
+        gen.add(" // DISABLED: invalid Pony function name")
+      end
+      gen.line("new val value_"+val_name+"() => _value = "+value.string())
     value = value + 1 end
     
     gen.pop_indent()
