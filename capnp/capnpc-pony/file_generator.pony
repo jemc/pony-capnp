@@ -82,6 +82,7 @@ class FileGenerator
     
     var value: U16 = 0
     for enumerant in enum_info.enumerants().values() do
+      gen.line()
       let val_name = enumerant.name()
       if gen.is_safe_ident(val_name) then
         gen.line("new val "+val_name+"() => _value = "+value.string())
@@ -116,6 +117,7 @@ class FileGenerator
     
     // Class fields
     for field in struct_info.fields().values() do
+      gen.line()
       _field_fun(node, field)
       _field_get_fun(node, field)
       _field_as_fun(node, field)
