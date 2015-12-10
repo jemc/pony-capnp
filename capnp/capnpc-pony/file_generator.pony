@@ -147,13 +147,6 @@ class FileGenerator
     gen.add(field.discriminantValue().string())
     gen.add(")")
   
-  fun ref _field_expr_if_check_union(node: schema.Node, field: schema.Field)? =>
-    if node.get_struct().discriminantCount() <= 1 then error end
-    
-    gen.add(" if")
-    _field_expr_check_union(node, field)
-    gen.add(" then")
-  
   fun ref _field_expr_get_value(node: schema.Node, field: schema.Field) =>
     let type_name     = _field_type_name(field)
     let slot          = field.slot()
@@ -287,7 +280,6 @@ class FileGenerator
   fun ref _field_get_fun(node: schema.Node, field: schema.Field)? =>
     let name      = field.name()
     let type_name = _field_type_name(field)
-    let is_union  = field.discriminantValue() != 0xffff
     let slot      = field.slot()
     let type_info = slot.get_type()
     
@@ -300,21 +292,29 @@ class FileGenerator
       return
     end
     
-    if _field_get_is_partial(field) then gen.add(" try") end
-    if is_union then _field_expr_if_check_union(node, field) end
+    let is_union   = field.discriminantValue() != 0xffff
+    let is_partial = _field_get_is_partial(field)
+    
+    if is_partial then gen.add(" try") end
+    
+    if is_union then
+      gen.add(" if")
+      _field_expr_check_union(node, field)
+      gen.add(" then")
+    end
     
     _field_expr_get_value(node, field)
     
     if is_union then
       gen.add(" else")
-      if _field_get_is_partial(field)
+      if is_partial
       then gen.add(" error")
       else _field_expr_default_value(node, field)
       end
       gen.add(" end")
     end
     
-    if _field_get_is_partial(field) then // TODO: refactor, merge with earlier if
+    if is_partial then
       gen.add(" else")
       _field_expr_default_value(node, field)
       gen.add(" end")
