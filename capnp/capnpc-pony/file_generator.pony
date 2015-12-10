@@ -48,6 +48,16 @@ class FileGenerator
     else _type_is_partial(field.slot().get_type())
     end
   
+  fun _field_get_is_partial(field: schema.Field): Bool =>
+    if field.is_group() then false else
+      let t = field.slot().get_type()
+      t.is_text()
+      or t.is_data()
+      or t.is_list()
+      or t.is_struct()
+      or t.is_anyPointer()
+    end
+  
   fun ref _file(node: schema.Node)? =>
     gen.line()
     gen.line("use \"../..\"")
@@ -144,6 +154,121 @@ class FileGenerator
     _field_expr_check_union(node, field)
     gen.add(" then")
   
+  fun ref _field_expr_get_value(node: schema.Node, field: schema.Field) =>
+    let type_name     = _field_type_name(field)
+    let slot          = field.slot()
+    let offset        = slot.offset()
+    let default_value = slot.defaultValue()
+    let t             = slot.get_type()
+    
+    gen.add(" ")
+    if field.is_group() then gen.add(type_name+"(_struct)")
+    elseif t.is_void()  then gen.add("None")
+    elseif t.is_bool()  then
+      let dv = default_value.bool()
+      if dv then gen.add("not ") end
+      gen.add("_struct.bool(")
+      gen.add((offset / 8).string(FormatHex))
+      gen.add(", 0b")
+      gen.add(U32(1 << (offset % 8)).string(FormatBinaryBare, PrefixDefault, 8))
+      gen.add(")")
+    elseif t.is_int8() then
+      let dv = default_value.int8()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.i8("+(offset * 1).string(FormatHex)+")")
+    elseif t.is_int16() then
+      let dv = default_value.int16()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.i16("+(offset * 2).string(FormatHex)+")")
+    elseif t.is_int32() then
+      let dv = default_value.int32()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.i32("+(offset * 4).string(FormatHex)+")")
+    elseif t.is_int64() then
+      let dv = default_value.int64()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.i64("+(offset * 8).string(FormatHex)+")")
+    elseif t.is_uint8() then
+      let dv = default_value.uint8()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.u8("+(offset * 1).string(FormatHex)+")")
+    elseif t.is_uint16() then
+      let dv = default_value.uint16()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.u16("+(offset * 2).string(FormatHex)+")")
+    elseif t.is_uint32() then
+      let dv = default_value.uint32()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.u32("+(offset * 4).string(FormatHex)+")")
+    elseif t.is_uint64() then
+      let dv = default_value.uint64()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.u64("+(offset * 8).string(FormatHex)+")")
+    elseif t.is_float32() then
+      let dv = default_value.float32()
+      if dv != 0 then gen.add("// UNHANDLED: default_value") end
+      gen.add("_struct.f32("+(offset * 4).string(FormatHex)+")")
+    elseif t.is_float64() then
+      let dv = default_value.float64()
+      if dv != 0 then gen.add("// UNHANDLED: default_value") end
+      gen.add("_struct.f64("+(offset * 8).string(FormatHex)+")")
+    elseif t.is_text() then
+      gen.add("_struct.ptr_text("+offset.string()+")")
+    elseif t.is_data() then
+      gen.add("_struct.ptr_data("+offset.string()+")")
+    elseif t.is_list() then
+      let etype_name = _type_name(t.list().elementType())
+      gen.add("_struct.ptr_list["+etype_name+"]("+offset.string()+")")
+    elseif t.is_enum() then
+      gen.add(req.node_scoped_name(t.enum().typeId()))
+      gen.add("(")
+      let dv = default_value.uint16()
+      if dv != 0 then gen.add(dv.string()+" xor ") end
+      gen.add("_struct.u16("+(offset * 2).string(FormatHex)+"))")
+    elseif t.is_struct() then
+      let etype_name = req.node_scoped_name(t.get_struct().typeId())
+      gen.add("_struct.ptr_struct["+etype_name+"]("+offset.string()+")")
+    elseif t.is_interface() then
+      // TODO: handle
+      gen.add("// UNKNOWN_INTERFACE")
+    elseif t.is_anyPointer() then
+      // TODO: handle default_value
+      gen.add("_struct.ptr("+offset.string()+") /* TODO: better type? */")
+    else gen.add("// UNKNOWN")
+    end
+  
+  fun ref _field_expr_default_value(node: schema.Node, field: schema.Field) =>
+    let type_name = _field_type_name(field)
+    let slot      = field.slot()
+    let dv        = slot.defaultValue()
+    let t         = slot.get_type()
+    
+    gen.add(" ")
+    if field.is_group()      then gen.add("_struct.ptr_emptystruct["+type_name+"]()") // TODO: handle default_value
+    elseif t.is_void()       then gen.add("None")
+    elseif t.is_bool()       then gen.add(dv.bool().string())
+    elseif t.is_int8()       then gen.add(dv.int8().string())
+    elseif t.is_int16()      then gen.add(dv.int16().string())
+    elseif t.is_int32()      then gen.add(dv.int32().string())
+    elseif t.is_int64()      then gen.add(dv.int64().string())
+    elseif t.is_uint8()      then gen.add(dv.uint8().string())
+    elseif t.is_uint16()     then gen.add(dv.uint16().string())
+    elseif t.is_uint32()     then gen.add(dv.uint32().string())
+    elseif t.is_uint64()     then gen.add(dv.uint64().string())
+    elseif t.is_float32()    then gen.add(dv.float32().string())
+    elseif t.is_float64()    then gen.add(dv.float64().string())
+    elseif t.is_text()       then gen.add(gen.string_literal(dv.text()))
+    elseif t.is_data()       then gen.add(gen.bytes_literal(dv.data()))
+    elseif t.is_list()       then let etype_name = _type_name(t.list().elementType())
+                                  gen.add("_struct.ptr_emptylist["+etype_name+"]()") // TODO: handle default_value
+    elseif t.is_enum()       then gen.add(req.node_scoped_name(t.enum().typeId()))
+                                  gen.add("("+dv.uint16().string()+")")
+    elseif t.is_struct()     then let etype_name = req.node_scoped_name(t.get_struct().typeId())
+                                  gen.add("_struct.ptr_emptystruct["+etype_name+"]()") // TODO: handle default_value
+    elseif t.is_interface()  then None // TODO
+    elseif t.is_anyPointer() then gen.add("error") // TODO
+    end
+  
   fun ref _field_fun(node: schema.Node, field: schema.Field) =>
     let name      = field.name()
     let type_name = _field_type_name(field)
@@ -170,161 +295,29 @@ class FileGenerator
     if _field_type_is_partial(field) then gen.add("?") end
     gen.add(" =>")
     
-    if field.is_group() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      gen.add(" "+type_name+"(_struct)")
-      if is_union then gen.add(" else _struct.ptr_emptystruct["+type_name+"]() end") end
-    elseif type_info.is_void() then
+    if not field.is_group() and type_info.is_void() then
       gen.add(" None")
-    elseif type_info.is_bool() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().bool()
-      if dv then gen.add("not ") end
-      gen.add(" _struct.bool(")
-      gen.add((slot.offset() / 8).string(FormatHex))
-      gen.add(", 0b")
-      gen.add(U32(1 << (slot.offset() % 8)).string(FormatBinaryBare, PrefixDefault, 8))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_int8() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().int8()
-      if dv != 0 then gen.add(" "+dv.string()+" xor") end
-      gen.add(" _struct.i8(")
-      gen.add((slot.offset() * 1).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_int16() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().int16()
-      if dv != 0 then gen.add(" "+dv.string()+" xor") end
-      gen.add(" _struct.i16(")
-      gen.add((slot.offset() * 2).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_int32() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().int32()
-      if dv != 0 then gen.add(" "+dv.string()+" xor") end
-      gen.add(" _struct.i32(")
-      gen.add((slot.offset() * 4).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_int64() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().int64()
-      if dv != 0 then gen.add(" "+dv.string()+" xor") end
-      gen.add(" _struct.i64(")
-      gen.add((slot.offset() * 8).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_uint8() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().uint8()
-      if dv != 0 then gen.add(" "+dv.string()+" xor") end
-      gen.add(" _struct.u8(")
-      gen.add((slot.offset() * 1).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_uint16() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().uint16()
-      if dv != 0 then gen.add(" "+dv.string()+" xor") end
-      gen.add(" _struct.u16(")
-      gen.add((slot.offset() * 2).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_uint32() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().uint32()
-      if dv != 0 then gen.add(" "+dv.string()+" xor") end
-      gen.add(" _struct.u32(")
-      gen.add((slot.offset() * 4).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_uint64() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().uint64()
-      if dv != 0 then gen.add(" "+dv.string()+" xor") end
-      gen.add(" _struct.u64(")
-      gen.add((slot.offset() * 8).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_float32() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().float32()
-      if dv != 0 then gen.add(" // UNHANDLED: defaultValue") end
-      gen.add(" _struct.f32(")
-      gen.add((slot.offset() * 4).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_float64() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      let dv = slot.defaultValue().float64()
-      if dv != 0 then gen.add(" // UNHANDLED: defaultValue") end
-      gen.add(" _struct.f64(")
-      gen.add((slot.offset() * 8).string(FormatHex))
-      gen.add(")")
-      if is_union then gen.add(" else "+dv.string()+" end") end
-    elseif type_info.is_text() then
-      let dv = slot.defaultValue().text()
-      gen.add(" try")
-      if is_union then _field_expr_if_check_union(node, field) end
-      gen.add(" _struct.ptr_text(")
-      gen.add(slot.offset().string())
-      gen.add(")")
-      if is_union then gen.add(" else error end") end
-      gen.add(" else "+gen.string_literal(dv)+" end")
-    elseif type_info.is_data() then
-      let dv = slot.defaultValue().data()
-      gen.add(" try")
-      if is_union then _field_expr_if_check_union(node, field) end
-      gen.add(" _struct.ptr_data(")
-      gen.add(slot.offset().string())
-      gen.add(")")
-      if is_union then gen.add(" else error end") end
-      gen.add(" else "+gen.bytes_literal(dv)+" end")
-    elseif type_info.is_list() then
-      // TODO: handle defaultValue
-      let etype_name = _type_name(type_info.list().elementType())
-      gen.add(" try")
-      if is_union then _field_expr_if_check_union(node, field) end
-      gen.add(" _struct.ptr_list["+etype_name+"]("+slot.offset().string()+")")
-      if is_union then gen.add(" else error end") end
-      gen.add(" else _struct.ptr_emptylist["+etype_name+"]() end")
-    elseif type_info.is_enum() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      // TODO: handle defaultValue
-      gen.add(" ")
-      gen.add(req.node_scoped_name(type_info.enum().typeId()))
-      gen.add("(")
-      let dv = slot.defaultValue().uint16()
-      if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.u16(")
-      gen.add((slot.offset() * 2).string(FormatHex))
-      gen.add("))")
-      if is_union then gen.add(" else error end") end
-    elseif type_info.is_struct() then
-      // TODO: handle defaultValue
-      let etype_name = req.node_scoped_name(type_info.get_struct().typeId())
-      gen.add(" try")
-      if is_union then _field_expr_if_check_union(node, field) end
-      gen.add(" _struct.ptr_struct["+etype_name+"]("+slot.offset().string()+")")
-      if is_union then gen.add(" else error end") end
-      gen.add(" else _struct.ptr_emptystruct["+etype_name+"]() end")
-    elseif type_info.is_interface() then
-      // TODO: handle
-      // TODO: handle defaultValue
-      gen.add("// UNKNOWN_INTERFACE")
-    elseif type_info.is_anyPointer() then
-      if is_union then _field_expr_if_check_union(node, field) end
-      // TODO: handle defaultValue
-      gen.add(" _struct.ptr(")
-      gen.add(slot.offset().string())
-      gen.add(")")
-      if is_union then gen.add(" else error end") end
-      gen.add(" // TODO: better return type?")
-    else gen.add("// UNKNOWN")
+      return
+    end
+    
+    if _field_get_is_partial(field) then gen.add(" try") end
+    if is_union then _field_expr_if_check_union(node, field) end
+    
+    _field_expr_get_value(node, field)
+    
+    if is_union then
+      gen.add(" else")
+      if _field_get_is_partial(field)
+      then gen.add(" error")
+      else _field_expr_default_value(node, field)
+      end
+      gen.add(" end")
+    end
+    
+    if _field_get_is_partial(field) then // TODO: refactor, merge with earlier if
+      gen.add(" else")
+      _field_expr_default_value(node, field)
+      gen.add(" end")
     end
   
   fun ref _field_is_fun(node: schema.Node, field: schema.Field)? =>

@@ -390,19 +390,19 @@ class val Value is CapnStruct let _struct: CapnStructPtr
   fun get_data(): Array[U8] val => try if _struct.check_union(0x0, 13) then _struct.ptr_data(0) else error end else recover val Array[U8] end end
   fun is_data(): Bool => _struct.check_union(0x0, 13)
   fun list(): CapnEntityPtr? => get_list()
-  fun get_list(): CapnEntityPtr? => if _struct.check_union(0x0, 14) then _struct.ptr(0) else error end // TODO: better return type?
+  fun get_list(): CapnEntityPtr? => try if _struct.check_union(0x0, 14) then _struct.ptr(0) /* TODO: better type? */ else error end else error end
   fun is_list(): Bool => _struct.check_union(0x0, 14)
   fun enum(): U16 => get_enum()
   fun get_enum(): U16 => if _struct.check_union(0x0, 15) then _struct.u16(0x2) else 0 end
   fun is_enum(): Bool => _struct.check_union(0x0, 15)
   // fun struct(): CapnEntityPtr? => get_struct() // DISABLED: invalid Pony function name
-  fun get_struct(): CapnEntityPtr? => if _struct.check_union(0x0, 16) then _struct.ptr(0) else error end // TODO: better return type?
+  fun get_struct(): CapnEntityPtr? => try if _struct.check_union(0x0, 16) then _struct.ptr(0) /* TODO: better type? */ else error end else error end
   fun is_struct(): Bool => _struct.check_union(0x0, 16)
   // fun interface(): None => get_interface() // DISABLED: invalid Pony function name
   fun get_interface(): None => None
   fun is_interface(): Bool => _struct.check_union(0x0, 17)
   fun anyPointer(): CapnEntityPtr? => get_anyPointer()
-  fun get_anyPointer(): CapnEntityPtr? => if _struct.check_union(0x0, 18) then _struct.ptr(0) else error end // TODO: better return type?
+  fun get_anyPointer(): CapnEntityPtr? => try if _struct.check_union(0x0, 18) then _struct.ptr(0) /* TODO: better type? */ else error end else error end
   fun is_anyPointer(): Bool => _struct.check_union(0x0, 18)
 
 class val Annotation is CapnStruct let _struct: CapnStructPtr
