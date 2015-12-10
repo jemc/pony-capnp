@@ -32,9 +32,21 @@ class FileGenerator
     else "UNKNOWN_TYPE"
     end
   
+  fun _field_type_name(field: schema.Field): String =>
+    if field.is_group()
+    then req.node_scoped_name(field.group().typeId())
+    else _type_name(field.slot().get_type())
+    end
+  
   fun _type_is_partial(t: schema.Type): Bool =>
     t.is_interface()
     or t.is_anyPointer()
+  
+  fun _field_type_is_partial(field: schema.Field): Bool =>
+    if field.is_group()
+    then false
+    else _type_is_partial(field.slot().get_type())
+    end
   
   fun ref _file(node: schema.Node)? =>
     gen.line()
@@ -94,6 +106,7 @@ class FileGenerator
     
     // Class fields
     for field in struct_info.fields().values() do
+      _field_getter_alias(node, field)
       _field_getter(node, field)
       _field_union_checker(node, field)
     end
@@ -124,17 +137,25 @@ class FileGenerator
     
     _field_union_check_statement(node, field)
   
-  fun ref _field_group_getter(node: schema.Node, field: schema.Field)? =>
+  fun ref _field_getter_alias(node: schema.Node, field: schema.Field) =>
     let name      = field.name()
-    let type_name = req.node_scoped_name(field.group().typeId())
-    let is_union  = field.discriminantValue() != 0xffff
+    let type_name = _field_type_name(field)
     
     if gen.is_safe_ident(name) then
-      gen.line("fun "+name+"(): "+type_name+" => get_"+name+"()")
+      gen.line("fun "+name+"(): "+type_name)
+      if _field_type_is_partial(field) then gen.add("?") end
+      gen.add(" => get_"+name+"()")
     else
-      gen.line("// fun "+name+"(): "+type_name+" => get_"+name+"()")
+      gen.line("// fun "+name+"(): "+type_name)
+      if _field_type_is_partial(field) then gen.add("?") end
+      gen.add(" => get_"+name+"()")
       gen.add(" // DISABLED: invalid Pony function name")
     end
+  
+  fun ref _field_group_getter(node: schema.Node, field: schema.Field)? =>
+    let name      = field.name()
+    let type_name = _field_type_name(field)
+    let is_union  = field.discriminantValue() != 0xffff
     
     gen.line("fun get_"+name+"(): "+type_name+" =>")
     
@@ -166,22 +187,11 @@ class FileGenerator
     let slot      = field.slot()
     let name      = field.name()
     let type_info = slot.get_type()
-    let type_name = _type_name(type_info)
+    let type_name = _field_type_name(field)
     let is_union  = field.discriminantValue() != 0xffff
     
-    if gen.is_safe_ident(name) then
-      gen.line("fun "+name+"(): "+type_name)
-      if _type_is_partial(type_info) then gen.add("?") end
-      gen.add(" => get_"+name+"()")
-    else
-      gen.line("// fun "+name+"(): "+type_name)
-      if _type_is_partial(type_info) then gen.add("?") end
-      gen.add(" => get_"+name+"()")
-      gen.add(" // DISABLED: invalid Pony function name")
-    end
-    
     gen.line("fun get_"+name+"(): "+type_name)
-    if _type_is_partial(type_info) then gen.add("?") end
+    if _field_type_is_partial(field) then gen.add("?") end
     gen.add(" =>")
     
     if type_info.is_void() then
