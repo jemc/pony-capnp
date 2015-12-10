@@ -177,25 +177,25 @@ class FileGenerator
     end
   
   fun ref _field_union_checker(node: schema.Node, field: schema.Field)? =>
-    var name = field.name()
+    let name = field.name()
     
-    name = "is_"+name
-    name = try _verify_ident(name) else "get_"+name end
-    
-    gen.line("fun "+name+"(): Bool =>")
+    gen.line("fun is_"+name+"(): Bool =>")
     
     _field_union_check_statement(node, field)
   
   fun ref _field_group_getter(node: schema.Node, field: schema.Field)? =>
-    var name = field.name()
-    var type_name = req.node_scoped_name(field.group().typeId())
+    let name      = field.name()
+    let type_name = req.node_scoped_name(field.group().typeId())
+    let is_union  = field.discriminantValue() != 0xffff
     
-    let is_union = field.discriminantValue() != 0xffff
+    try _verify_ident(name)
+      gen.line("fun "+name+"(): "+type_name+" => get_"+name+"()")
+    else
+      gen.line("// fun "+name+"(): "+type_name+" => get_"+name+"()")
+      gen.add(" // DISABLED: invalid Pony function name")
+    end
     
-    if is_union then name = ""+name end
-    name = try _verify_ident(name) else "get_"+name end
-    
-    gen.line("fun "+name+"(): "+type_name+" =>")
+    gen.line("fun get_"+name+"(): "+type_name+" =>")
     
     if is_union then _field_union_check_condition(node, field) end
     
@@ -222,16 +222,24 @@ class FileGenerator
   fun ref _field_getter(node: schema.Node, field: schema.Field)? =>
     if field.is_group() then return _field_group_getter(node, field) end
     
-    let slot = field.slot()
-    var name = field.name()
+    let slot      = field.slot()
+    let name      = field.name()
     let type_info = slot.get_type()
     let type_name = _type_name(type_info)
-    let is_union = field.discriminantValue() != 0xffff
+    let is_union  = field.discriminantValue() != 0xffff
     
-    if is_union then name = ""+name end
-    name = try _verify_ident(name) else "get_"+name end
+    try _verify_ident(name)
+      gen.line("fun "+name+"(): "+type_name)
+      if _type_is_partial(type_info) then gen.add("?") end
+      gen.add(" => get_"+name+"()")
+    else
+      gen.line("// fun "+name+"(): "+type_name)
+      if _type_is_partial(type_info) then gen.add("?") end
+      gen.add(" => get_"+name+"()")
+      gen.add(" // DISABLED: invalid Pony function name")
+    end
     
-    gen.line("fun "+name+"(): "+type_name)
+    gen.line("fun get_"+name+"(): "+type_name)
     if _type_is_partial(type_info) then gen.add("?") end
     gen.add(" =>")
     
