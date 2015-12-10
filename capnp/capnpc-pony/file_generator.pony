@@ -143,25 +143,10 @@ class FileGenerator
     
     gen.add(" _struct = s'")
     
-    // Non-union field getters
+    // Class fields
     for field in struct_info.fields().values() do
-      if field.discriminantValue() == 0xffff
-      then _field_getter(node, field)
-      end
-    end
-    
-    // Union field getters
-    for field in struct_info.fields().values() do
-      if field.discriminantValue() != 0xffff
-      then _field_getter(node, field)
-      end
-    end
-    
-    // Union field checkers
-    for field in struct_info.fields().values() do
-      if field.discriminantValue() != 0xffff
-      then _field_union_checker(node, field)
-      end
+      _field_getter(node, field)
+      _field_union_checker(node, field)
     end
     
     gen.pop_indent()
@@ -182,6 +167,8 @@ class FileGenerator
     end
   
   fun ref _field_union_checker(node: schema.Node, field: schema.Field)? =>
+    if field.discriminantValue() == 0xffff then return end
+    
     let name = field.name()
     
     gen.line("fun is_"+name+"(): Bool =>")
