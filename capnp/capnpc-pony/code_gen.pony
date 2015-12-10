@@ -27,3 +27,24 @@ class CodeGen
   
   fun ref current_indent(): String =>
     try _indents.tail()() else "" end
+  
+  fun tag is_safe_ident(ident: String): Bool =>
+    match ident
+    | "use"
+    | "type" | "interface" | "trait"
+    | "primitive" | "class" | "actor" | "struct"
+    | "var" | "let" | "embed"
+    | "fun" | "be" | "new"
+    | "return" | "break" | "continue" | "error"
+    | "compile_intrinsic" | "compile_error"
+    | "and" | "or" | "xor" | "is" | "isnt"
+    | "not" | "addressof" | "identityof"
+    | "if" | "else" | "elseif" | "ifdef" | "try" | "then" | "with"
+    | "match" | "while" | "do" | "for" | "in" | "repeat" | "until"
+    | "recover" | "consume"
+    | "this" | "true" | "false"
+    | "iso" | "trn" | "ref" | "val" | "box" | "tag"
+    | "apply" | "create"
+    | "end" => false
+    else true
+    end

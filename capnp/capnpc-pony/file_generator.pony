@@ -9,27 +9,6 @@ class FileGenerator
   
   new ref create(req': Request, node: schema.Node)? => req = req'; _file(node)
   
-  fun tag _verify_ident(name: String): String? =>
-    match name
-    | "use"
-    | "type" | "interface" | "trait"
-    | "primitive" | "class" | "actor" | "struct"
-    | "var" | "let" | "embed"
-    | "fun" | "be" | "new"
-    | "return" | "break" | "continue" | "error"
-    | "compile_intrinsic" | "compile_error"
-    | "and" | "or" | "xor" | "is" | "isnt"
-    | "not" | "addressof" | "identityof"
-    | "if" | "else" | "elseif" | "ifdef" | "try" | "then" | "with"
-    | "match" | "while" | "do" | "for" | "in" | "repeat" | "until"
-    | "recover" | "consume"
-    | "this" | "true" | "false"
-    | "iso" | "trn" | "ref" | "val" | "box" | "tag"
-    | "apply" | "create"
-    | "end" => error
-    else name
-    end
-  
   fun tag _string_literal(s: String box): String =>
     let out = recover trn String end
     out.push('"')
@@ -112,7 +91,7 @@ class FileGenerator
     var value: U16 = 0
     for enumerant in enum_info.enumerants().values() do
       let val_name = enumerant.name()
-      try _verify_ident(val_name)
+      if gen.is_safe_ident(val_name) then
         gen.line("new val "+val_name+"() => _value = "+value.string())
       else
         gen.line("// new val "+val_name+"() => _value = "+value.string())
@@ -180,7 +159,7 @@ class FileGenerator
     let type_name = req.node_scoped_name(field.group().typeId())
     let is_union  = field.discriminantValue() != 0xffff
     
-    try _verify_ident(name)
+    if gen.is_safe_ident(name) then
       gen.line("fun "+name+"(): "+type_name+" => get_"+name+"()")
     else
       gen.line("// fun "+name+"(): "+type_name+" => get_"+name+"()")
@@ -220,7 +199,7 @@ class FileGenerator
     let type_name = _type_name(type_info)
     let is_union  = field.discriminantValue() != 0xffff
     
-    try _verify_ident(name)
+    if gen.is_safe_ident(name) then
       gen.line("fun "+name+"(): "+type_name)
       if _type_is_partial(type_info) then gen.add("?") end
       gen.add(" => get_"+name+"()")
