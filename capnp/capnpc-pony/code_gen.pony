@@ -1,5 +1,6 @@
 
 use "collections"
+use "format"
 
 class CodeGen
   let _lines:   List[String] = List[String]
@@ -56,10 +57,10 @@ class CodeGen
       match b'
       | '"'  => out.push('\\'); out.push('"')
       | '\\' => out.push('\\'); out.push('\\')
-      | let b: U8 if b < 0x10 => out.append("\\x0" + b.string(FormatHexBare))
-      | let b: U8 if b < 0x20 => out.append("\\x"  + b.string(FormatHexBare))
+      | let b: U8 if b < 0x10 => out.append("\\x0" + Format.int[U8](b, FormatHexBare))
+      | let b: U8 if b < 0x20 => out.append("\\x"  + Format.int[U8](b, FormatHexBare))
       | let b: U8 if b < 0x7F => out.push(b)
-      else let b = b';           out.append("\\x"  + b.string(FormatHexBare))
+      else let b = b';           out.append("\\x"  + Format.int[U8](b, FormatHexBare))
       end
     end
     out.push('"')
@@ -72,7 +73,7 @@ class CodeGen
     
     let iter = a.values()
     for b in iter do
-      out.append("0x" + b.string(FormatHexBare, PrefixDefault, 2))
+      out.append("0x" + Format.int[U8](b, FormatHexBare, PrefixDefault, 2))
       if iter.has_next() then out.append(", ") end
     end
     

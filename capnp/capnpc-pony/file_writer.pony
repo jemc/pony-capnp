@@ -6,7 +6,7 @@ actor FileWriter
   new create(env': Env) => _env = env'
   
   be apply(path: String, contents: String) =>
-    try let file = CreateFile(FilePath(_env.root, path)) as File
+    try let file = CreateFile(FilePath(_env.root as AmbientAuth, path)) as File
       _write_file(file, contents)
     else _env.out.print("[ERROR] Couldn't access path: "+path)
     end

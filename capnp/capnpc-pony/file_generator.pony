@@ -1,5 +1,6 @@
 
 use schema = "schema"
+use "format"
 
 class FileGenerator
   let gen: CodeGen = CodeGen
@@ -98,8 +99,8 @@ class FileGenerator
   fun ref _struct(node: schema.Node)? =>
     let name = req.node_scoped_name(node.id())
     let struct_info = node.get_struct()
-    let ds: String = (struct_info.dataWordCount() * 8).string(FormatHex)
-    let ps: String = (struct_info.pointerCount()).string()
+    let ds: String = Format.int[U16](struct_info.dataWordCount() * 8, FormatHex)
+    let ps: String = Format.int[U16](struct_info.pointerCount())
     let cls = if struct_info.isGroup() then "CapnGroup" else "CapnStruct" end
     
     gen.line()
@@ -145,18 +146,18 @@ class FileGenerator
     if node.get_struct().discriminantCount() <= 1 then error end
     
     gen.add(" _struct.check_union(")
-    gen.add((node.get_struct().discriminantOffset() * 2).string(FormatHex))
+    gen.add(Format.int[U32](node.get_struct().discriminantOffset() * 2, FormatHex))
     gen.add(", ")
-    gen.add(field.discriminantValue().string())
+    gen.add(Format.int[U16](field.discriminantValue()))
     gen.add(")")
   
   fun ref _field_expr_assert_union(node: schema.Node, field: schema.Field)? =>
     if node.get_struct().discriminantCount() <= 1 then error end
     
     gen.add(" _struct.assert_union(")
-    gen.add((node.get_struct().discriminantOffset() * 2).string(FormatHex))
+    gen.add(Format.int[U32](node.get_struct().discriminantOffset() * 2, FormatHex))
     gen.add(", ")
-    gen.add(field.discriminantValue().string())
+    gen.add(Format.int[U16](field.discriminantValue()))
     gen.add(")")
   
   fun ref _field_expr_get_value(node: schema.Node, field: schema.Field) =>
@@ -173,50 +174,50 @@ class FileGenerator
       let dv = default_value.bool()
       if dv then gen.add("not ") end
       gen.add("_struct.bool(")
-      gen.add((offset / 8).string(FormatHex))
+      gen.add(Format.int[U32](offset / 8, FormatHex))
       gen.add(", 0b")
-      gen.add(U32(1 << (offset % 8)).string(FormatBinaryBare, PrefixDefault, 8))
+      gen.add(Format.int[U32](U32(1 << (offset % 8)), FormatBinaryBare, PrefixDefault, 8))
       gen.add(")")
     elseif t.is_int8() then
       let dv = default_value.int8()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.i8("+(offset * 1).string(FormatHex)+")")
+      gen.add("_struct.i8("+Format.int[U32](offset * 1, FormatHex)+")")
     elseif t.is_int16() then
       let dv = default_value.int16()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.i16("+(offset * 2).string(FormatHex)+")")
+      gen.add("_struct.i16("+Format.int[U32](offset * 2, FormatHex)+")")
     elseif t.is_int32() then
       let dv = default_value.int32()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.i32("+(offset * 4).string(FormatHex)+")")
+      gen.add("_struct.i32("+Format.int[U32](offset * 4, FormatHex)+")")
     elseif t.is_int64() then
       let dv = default_value.int64()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.i64("+(offset * 8).string(FormatHex)+")")
+      gen.add("_struct.i64("+Format.int[U32](offset * 8, FormatHex)+")")
     elseif t.is_uint8() then
       let dv = default_value.uint8()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.u8("+(offset * 1).string(FormatHex)+")")
+      gen.add("_struct.u8("+Format.int[U32](offset * 1, FormatHex)+")")
     elseif t.is_uint16() then
       let dv = default_value.uint16()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.u16("+(offset * 2).string(FormatHex)+")")
+      gen.add("_struct.u16("+Format.int[U32](offset * 2, FormatHex)+")")
     elseif t.is_uint32() then
       let dv = default_value.uint32()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.u32("+(offset * 4).string(FormatHex)+")")
+      gen.add("_struct.u32("+Format.int[U32](offset * 4, FormatHex)+")")
     elseif t.is_uint64() then
       let dv = default_value.uint64()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.u64("+(offset * 8).string(FormatHex)+")")
+      gen.add("_struct.u64("+Format.int[U32](offset * 8, FormatHex)+")")
     elseif t.is_float32() then
       let dv = default_value.float32()
       if dv != 0 then gen.add("// UNHANDLED: default_value") end
-      gen.add("_struct.f32("+(offset * 4).string(FormatHex)+")")
+      gen.add("_struct.f32("+Format.int[U32](offset * 4, FormatHex)+")")
     elseif t.is_float64() then
       let dv = default_value.float64()
       if dv != 0 then gen.add("// UNHANDLED: default_value") end
-      gen.add("_struct.f64("+(offset * 8).string(FormatHex)+")")
+      gen.add("_struct.f64("+Format.int[U32](offset * 8, FormatHex)+")")
     elseif t.is_text() then
       gen.add("_struct.ptr_text("+offset.string()+")")
     elseif t.is_data() then
@@ -229,7 +230,7 @@ class FileGenerator
       gen.add("(")
       let dv = default_value.uint16()
       if dv != 0 then gen.add(dv.string()+" xor ") end
-      gen.add("_struct.u16("+(offset * 2).string(FormatHex)+"))")
+      gen.add("_struct.u16("+Format.int[U32](offset * 2, FormatHex)+"))")
     elseif t.is_struct() then
       let etype_name = req.node_scoped_name(t.get_struct().typeId())
       gen.add("_struct.ptr_struct["+etype_name+"]("+offset.string()+")")
