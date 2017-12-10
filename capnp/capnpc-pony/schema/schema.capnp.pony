@@ -579,7 +579,7 @@ class val Value is CapnStruct let _struct: CapnStructPtr
   fun as_enum(): U16? => _struct.assert_union(0x0, 15)?; _struct.u16(0x2)
   fun is_enum(): Bool => _struct.check_union(0x0, 15)
   
-  // fun struct(): CapnEntityPtr? => get_struct() // DISABLED: invalid Pony function name
+  // fun struct(): CapnEntityPtr? => get_struct()? // DISABLED: invalid Pony function name
   fun get_struct(): CapnEntityPtr? => try if _struct.check_union(0x0, 16) then _struct.ptr(0)? /* TODO: better type? */ else error end else error end
   fun as_struct(): CapnEntityPtr? => _struct.assert_union(0x0, 16)?; try _struct.ptr(0)? /* TODO: better type? */ else error end
   fun is_struct(): Bool => _struct.check_union(0x0, 16)

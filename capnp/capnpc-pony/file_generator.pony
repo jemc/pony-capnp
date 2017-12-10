@@ -158,7 +158,7 @@ class FileGenerator
     gen.add(Format.int[U32](node.get_struct().discriminantOffset() * 2, FormatHex))
     gen.add(", ")
     gen.add(Format.int[U16](field.discriminantValue()))
-    gen.add(")")
+    gen.add(")?")
   
   fun ref _field_expr_get_value(node: schema.Node, field: schema.Field) =>
     let type_name     = _field_type_name(field)
@@ -219,12 +219,12 @@ class FileGenerator
       if dv != 0 then gen.add("// UNHANDLED: default_value") end
       gen.add("_struct.f64("+Format.int[U32](offset * 8, FormatHex)+")")
     elseif t.is_text() then
-      gen.add("_struct.ptr_text("+offset.string()+")")
+      gen.add("_struct.ptr_text("+offset.string()+")?")
     elseif t.is_data() then
-      gen.add("_struct.ptr_data("+offset.string()+")")
+      gen.add("_struct.ptr_data("+offset.string()+")?")
     elseif t.is_list() then
       let etype_name = _type_name(t.list().elementType())
-      gen.add("_struct.ptr_list["+etype_name+"]("+offset.string()+")")
+      gen.add("_struct.ptr_list["+etype_name+"]("+offset.string()+")?")
     elseif t.is_enum() then
       gen.add(req.node_scoped_name(t.enum().typeId()))
       gen.add("(")
@@ -233,13 +233,13 @@ class FileGenerator
       gen.add("_struct.u16("+Format.int[U32](offset * 2, FormatHex)+"))")
     elseif t.is_struct() then
       let etype_name = req.node_scoped_name(t.get_struct().typeId())
-      gen.add("_struct.ptr_struct["+etype_name+"]("+offset.string()+")")
+      gen.add("_struct.ptr_struct["+etype_name+"]("+offset.string()+")?")
     elseif t.is_interface() then
       // TODO: handle
       gen.add("// UNKNOWN_INTERFACE")
     elseif t.is_anyPointer() then
       // TODO: handle default_value
-      gen.add("_struct.ptr("+offset.string()+") /* TODO: better type? */")
+      gen.add("_struct.ptr("+offset.string()+")? /* TODO: better type? */")
     else gen.add("// UNKNOWN")
     end
   
@@ -283,10 +283,12 @@ class FileGenerator
       gen.line("fun "+name+"(): "+type_name)
       if _field_type_is_partial(field) then gen.add("?") end
       gen.add(" => get_"+name+"()")
+      if _field_type_is_partial(field) then gen.add("?") end
     else
       gen.line("// fun "+name+"(): "+type_name)
       if _field_type_is_partial(field) then gen.add("?") end
       gen.add(" => get_"+name+"()")
+      if _field_type_is_partial(field) then gen.add("?") end
       gen.add(" // DISABLED: invalid Pony function name")
     end
   
