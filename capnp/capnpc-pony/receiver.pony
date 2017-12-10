@@ -1,10 +1,9 @@
 
 use ".."
-use "../rope"
 use "schema"
 
 actor Receiver
-  var _buffer: Rope = Rope
+  var _buffer: String = ""
   let _handler: RequestHandler
   new create(handler: RequestHandler) => _handler = handler
   
@@ -16,7 +15,8 @@ actor Receiver
     end
   
   be read_bytes(data: Array[U8] iso) =>
-    _buffer = _buffer + consume data
+    // TODO: integrate closer with data source and use `expect` to avoid adding.
+    _buffer = _buffer + String.from_array(consume data)
   
   be parse_buffer() =>
     try

@@ -5,7 +5,7 @@ type CapnEntityPtr is (CapnStructPtr | CapnListPtr | CapnCapabilityPtr)
 
 primitive CapnEntityPtrUtil
   fun tag parse(segments: Array[CapnSegment] val, segment: CapnSegment, s_offset: USize): CapnEntityPtr? =>
-    let lower = segment.u32(s_offset)?
+    let lower = _Mem.u32(segment, s_offset)?
     
     match (lower and 0b11)
     | 0 => // Struct
@@ -13,26 +13,26 @@ primitive CapnEntityPtrUtil
       if 0 > ((lower or 0b11) >> 2).i32() then Debug("FIXME") end
       let data_offset    = s_offset + (((lower or 0b11) >> 2).i32().i64() * 8).usize() + 8
       let pointer_offset = data_offset
-                         + (segment.u16(s_offset + 4)?.usize() * 8)
+                         + (_Mem.u16(segment, s_offset + 4)?.usize() * 8)
       let end_offset     = pointer_offset
-                         + (segment.u16(s_offset + 6)?.usize() * 8)
+                         + (_Mem.u16(segment, s_offset + 6)?.usize() * 8)
       CapnStructPtr(segments, segment, data_offset, pointer_offset, end_offset)
     | 1 => // List
       // TODO: review this calculation of data_offset for all edge cases.
       if 0 > (lower >> 2).i32() then Debug("FIXME") end
       let data_offset = s_offset + ((lower >> 2).i32().i64() * 8).usize() + 8
-      let upper       = segment.u32(s_offset + 4)?
+      let upper       = _Mem.u32(segment, s_offset + 4)?
       let width_code  = upper and 0b111
       let list_size   = upper >> 3
       CapnListPtrUtil.from(segments, segment, data_offset, width_code, list_size)?
     | 2 => // Far Pointer
       let double_far     = (lower and 0b100) isnt U32(0)
       let pointer_offset = (lower >> 3).usize() * 8
-      let segment_index  = segment.u32(s_offset + 4)?.usize()
+      let segment_index  = _Mem.u32(segment, s_offset + 4)?.usize()
       if double_far then Debug("FIXME double_far"); error end
       parse(segments, segments(segment_index)?, pointer_offset)?
     | 3 => // Capability
-      let table_index = segment.u32(s_offset + 4)?
+      let table_index = _Mem.u32(segment, s_offset + 4)?
       CapnCapabilityPtr(table_index)
     else error
     end
@@ -61,9 +61,9 @@ class val CapnStructPtr
     if j >= (pointer_offset - data_offset) then error end
   
   fun u8(i: USize):  U8  => try _in_data(i)?;     segment(data_offset + i)?     else 0 end
-  fun u16(i: USize): U16 => try _in_data(i + 1)?; segment.u16(data_offset + i)? else 0 end
-  fun u32(i: USize): U32 => try _in_data(i + 3)?; segment.u32(data_offset + i)? else 0 end
-  fun u64(i: USize): U64 => try _in_data(i + 7)?; segment.u64(data_offset + i)? else 0 end
+  fun u16(i: USize): U16 => try _in_data(i + 1)?; _Mem.u16(segment, data_offset + i)? else 0 end
+  fun u32(i: USize): U32 => try _in_data(i + 3)?; _Mem.u32(segment, data_offset + i)? else 0 end
+  fun u64(i: USize): U64 => try _in_data(i + 7)?; _Mem.u64(segment, data_offset + i)? else 0 end
   fun i8(i: USize):  I8  => u8(i).i8()
   fun i16(i: USize): I16 => u16(i).i16()
   fun i32(i: USize): I32 => u32(i).i32()
@@ -178,9 +178,9 @@ class val CapnListPtrToStructs is (CapnListPtr & ReadSeq[CapnStructPtr])
       data_offset, end_offset ) = try
         if c == 0 then error end
         
-        let ls = segment.u32(d)? >> 2
-        let sds = segment.u16(d + 4)?.usize() * 8
-        let sps = segment.u16(d + 6)?.usize() * 8
+        let ls = _Mem.u32(segment, d)? >> 2
+        let sds = _Mem.u16(segment, d + 4)?.usize() * 8
+        let sps = _Mem.u16(segment, d + 6)?.usize() * 8
         let dat = d + 8
         
         ( ls, sds, sps, dat, dat + (ls.usize() * (sds + sps)) ) // TODO: dat + (c.usize() * 8)
