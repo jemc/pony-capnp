@@ -21,7 +21,7 @@ class val _ArraySliceU8 is _RopeSegment
     array = a; start = s; finish = f
   
   fun size(): USize                   => finish - start
-  fun apply(i: USize): U8?            => array(start + i)
+  fun apply(i: USize): U8?            => array(start + i)?
   fun slice(i: USize, j: USize): Rope => Rope(_ArraySliceU8(array, start + i, (start + j).min(finish)))
   fun values(): Iterator[U8] =>
     object is Iterator[U8]
@@ -29,7 +29,7 @@ class val _ArraySliceU8 is _RopeSegment
       var index: USize             = start
       fun ref has_next(): Bool => index < slice.finish
       fun ref next(): U8? =>
-        if has_next() then slice.array(index = index + 1) else error end
+        if has_next() then slice.array(index = index + 1)? else error end
     end
 
 class val Rope is (_RopeSegment & Stringable)
@@ -47,8 +47,8 @@ class val Rope is (_RopeSegment & Stringable)
   
   fun apply(i: USize): U8? =>
     if _weight <= i
-    then _right(i - _weight)
-    else _left(i)
+    then _right(i - _weight)?
+    else _left(i)?
     end
   
   fun slice(i: USize, j: USize): Rope =>
@@ -76,7 +76,7 @@ class val Rope is (_RopeSegment & Stringable)
     try
       var index = i
       while index < j do
-        slice_seg.push(seg.apply(index))
+        slice_seg.push(seg.apply(index)?)
       index = index + 1 end
     end
     Rope(consume slice_seg)
@@ -87,8 +87,8 @@ class val Rope is (_RopeSegment & Stringable)
       let _right_values: Iterator[U8] = _right.values()
       fun ref has_next(): Bool => _left_values.has_next()
                                or _right_values.has_next()
-      fun ref next(): U8?      => try _left_values.next()
-                                 else _right_values.next() end
+      fun ref next(): U8?      => try _left_values.next()?
+                                 else _right_values.next()? end
     end
   
   fun val add(that: _RopeSegment): Rope =>
@@ -103,20 +103,20 @@ class val Rope is (_RopeSegment & Stringable)
       Rope(this, that)
     end
   
-  fun u16(offset: USize): U16? => apply(offset).u16()
-                               + (apply(offset + 1).u16() << 8)
-  fun u32(offset: USize): U32? => apply(offset).u32()
-                               + (apply(offset + 1).u32() << 8)
-                               + (apply(offset + 2).u32() << 16)
-                               + (apply(offset + 3).u32() << 24)
-  fun u64(offset: USize): U64? => apply(offset).u64()
-                               + (apply(offset + 1).u64() << 8)
-                               + (apply(offset + 2).u64() << 16)
-                               + (apply(offset + 3).u64() << 24)
-                               + (apply(offset + 4).u64() << 32)
-                               + (apply(offset + 5).u64() << 40)
-                               + (apply(offset + 6).u64() << 48)
-                               + (apply(offset + 7).u64() << 56)
+  fun u16(offset: USize): U16? => apply(offset)?.u16()
+                               + (apply(offset + 1)?.u16() << 8)
+  fun u32(offset: USize): U32? => apply(offset)?.u32()
+                               + (apply(offset + 1)?.u32() << 8)
+                               + (apply(offset + 2)?.u32() << 16)
+                               + (apply(offset + 3)?.u32() << 24)
+  fun u64(offset: USize): U64? => apply(offset)?.u64()
+                               + (apply(offset + 1)?.u64() << 8)
+                               + (apply(offset + 2)?.u64() << 16)
+                               + (apply(offset + 3)?.u64() << 24)
+                               + (apply(offset + 4)?.u64() << 32)
+                               + (apply(offset + 5)?.u64() << 40)
+                               + (apply(offset + 6)?.u64() << 48)
+                               + (apply(offset + 7)?.u64() << 56)
   
   fun string(): String iso^ =>
     let len = size()

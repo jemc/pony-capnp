@@ -20,8 +20,8 @@ actor Receiver
   
   be parse_buffer() =>
     try
-      let segments = CapnSegmentUtil.parse_table(_buffer)
-      let entity = CapnEntityPtrUtil.parse(segments, segments(0), 0)
+      let segments = CapnSegmentUtil.parse_table(_buffer)?
+      let entity = CapnEntityPtrUtil.parse(segments, segments(0)?, 0)?
       let req = CodeGeneratorRequest(entity as CapnStructPtr)
       _handler(req)
     end

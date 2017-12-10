@@ -10,10 +10,10 @@ actor RequestHandler
     for file in req.root.nodes().values() do
       if file.is_file() then
         try
-          let file_info = req.file(file.id())
+          let file_info = req.file(file.id())?
           
           let filename = file_info.filename() + ".pony"
-          _writer(filename, FileGenerator(req, file).string())
+          _writer(filename, FileGenerator(req, file)?.string())
         end
       end
     end

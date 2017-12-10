@@ -8,7 +8,7 @@ class FileGenerator
   
   fun string(): String => gen.string()
   
-  new ref create(req': Request, node: schema.Node)? => req = req'; _file(node)
+  new ref create(req': Request, node: schema.Node)? => req = req'; _file(node)?
   
   fun _type_name(t: schema.Type): String =>
     if     t.is_void()       then "None"
@@ -64,8 +64,8 @@ class FileGenerator
     gen.line("use \"../..\"")
     
     for nest_info in node.nestedNodes().values() do
-      let child = req.node(nest_info.id())
-      if     child.is_struct() then _struct(child)
+      let child = req.node(nest_info.id())?
+      if     child.is_struct() then _struct(child)?
       elseif child.is_enum()   then _enum(child)
       else gen.line("// UNHANDLED: " + child.displayName())
       end
@@ -120,9 +120,9 @@ class FileGenerator
     for field in struct_info.fields().values() do
       gen.line()
       _field_fun(node, field)
-      _field_get_fun(node, field)
-      _field_as_fun(node, field)
-      _field_is_fun(node, field)
+      _field_get_fun(node, field)?
+      _field_as_fun(node, field)?
+      _field_is_fun(node, field)?
     end
     
     gen.pop_indent()
@@ -130,14 +130,14 @@ class FileGenerator
     // Group class definitions
     for field in struct_info.fields().values() do
       try let group = field.group()
-        _struct(req.node(group.typeId()))
+        _struct(req.node(group.typeId())?)?
       end
     end
     
     // Nested type declarations
     for nest_info in node.nestedNodes().values() do
-      let child = req.node(nest_info.id())
-      if child.is_struct() then _struct(child)
+      let child = req.node(nest_info.id())?
+      if child.is_struct() then _struct(child)?
       else gen.line("// UNHANDLED: " + child.displayName())
       end
     end
@@ -312,7 +312,7 @@ class FileGenerator
     
     if is_union then
       gen.add(" if")
-      _field_expr_check_union(node, field)
+      _field_expr_check_union(node, field)?
       gen.add(" then")
     end
     
@@ -343,7 +343,7 @@ class FileGenerator
     
     gen.line("fun as_"+name+"(): "+type_name+"? =>")
     
-    _field_expr_assert_union(node, field)
+    _field_expr_assert_union(node, field)?
     gen.add(";")
     
     if not field.is_group() and type_info.is_void() then
@@ -369,4 +369,4 @@ class FileGenerator
     let name = field.name()
     
     gen.line("fun is_"+name+"(): Bool =>")
-    _field_expr_check_union(node, field)
+    _field_expr_check_union(node, field)?
