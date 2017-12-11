@@ -1,2 +1,3 @@
-capnp/rope/rope
-capnpc-pony/capnpc-pony
+bin
+*.old
+*.new

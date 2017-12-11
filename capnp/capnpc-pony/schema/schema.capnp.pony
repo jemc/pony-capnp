@@ -224,7 +224,7 @@ class val FieldGROUPordinal is CapnGroup let _struct: CapnStructPtr
   fun get_explicit(): U16 => if _struct.check_union(0xA, 1) then _struct.u16(0xC) else 0 end
   fun as_explicit(): U16? => _struct.assert_union(0xA, 1)?; _struct.u16(0xC)
   fun is_explicit(): Bool => _struct.check_union(0xA, 1)
-// UNHANDLED: schema/schema.capnp:Field.noDiscriminant
+// UNHANDLED: capnp/capnpc-pony/schema/schema.capnp:Field.noDiscriminant
 
 class val Enumerant is CapnStruct let _struct: CapnStructPtr
   new val create(s': CapnStructPtr) => s'.verify(0x8, 8*2); _struct = s'
