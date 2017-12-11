@@ -1,12 +1,18 @@
-all: test
-.PHONY: all test clean lldb lldb-test ci ci-setup test-regen
-
 PKG=capnp
 APP=capnpc-pony
+
+prefix="/usr/local"
+
+all: bin/${APP}
+.PHONY: all install test test-regen clean lldb lldb-test ci ci-setup
 
 bin/${APP}: $(shell find ${PKG} ${PKG}/${APP} .deps -name *.pony)
 	mkdir -p bin
 	ponyc --debug -o bin ${PKG}/${APP}
+
+install: bin/${APP}
+	mkdir -p $(prefix)/bin
+	cp $^ $(prefix)/bin
 
 # bin/test: $(shell find ${PKG} .deps -name *.pony)
 # 	mkdir -p bin
